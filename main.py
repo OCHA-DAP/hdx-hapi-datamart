@@ -2,8 +2,6 @@ import logging
 import logging.config
 import os
 
-from hdx_hapi.endpoints.models import datamart
-
 logging.config.fileConfig(os.getenv('LOGGING_CONF_FILE', 'logging.conf'))
 
 import uvicorn  # noqa
