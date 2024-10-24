@@ -2,6 +2,7 @@ from typing import Optional
 
 from hdx_hapi.datamart.datamart_list import datamart_list
 from hdx_hapi.datamart.datamart_search import datamart_search
+from hdx_hapi.datamart.datamart_data import datamart_data
 from hdx_hapi.datamart.datamart_responses import ListTypeEnum
 from hdx_hapi.endpoints.util.util import PaginationParams
 
@@ -25,7 +26,6 @@ async def get_datamart_search_srv(
     return results
 
 
-async def get_datamart_data_srv(
-    pagination_parameters: PaginationParams,
-):
-    return [{'placeholder': 'hello'}]
+async def get_datamart_data_srv(pagination_parameters: PaginationParams, download_url: Optional[str]):
+    results = await datamart_data(pagination_parameters, download_url)
+    return results

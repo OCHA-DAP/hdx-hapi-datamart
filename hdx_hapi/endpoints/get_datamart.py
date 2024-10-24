@@ -1,5 +1,6 @@
 from typing import Annotated, Optional
 from fastapi import Depends, Query, APIRouter
+from pydantic import HttpUrl, UrlConstraints
 
 
 from hdx_hapi.config.doc_snippets import DOC_HDX_RESOURCE_ID
@@ -82,21 +83,26 @@ async def get_datamart_search(
 
 @router.get(
     '/api/datamart/data',
-    response_model=HapiGenericResponse[DatamartSearchResponse],
+    response_model=None,  # HapiGenericResponse[DatamartSearchResponse],
     summary='Get data from the HAPI datamart which come from HDX',
     include_in_schema=False,
 )
 @router.get(
     '/api/v1/datamart/data',
-    response_model=HapiGenericResponse[DatamartSearchResponse],
+    response_model=None,  # HapiGenericResponse[DatamartSearchResponse],
     summary='Get data from the HAPI datamart which come from HDX',
 )
 async def get_datamart_data(
     common_parameters: Annotated[CommonEndpointParams, Depends(common_endpoint_parameters)],
+    # download_url: Annotated[
+    #     HttpUrl,
+    #     UrlConstraints(max_length=2083, allowed_schemes=['http', 'https']),
+    # ],
+    download_url: Annotated[Optional[str], Query(max_length=2048, description='A direct download_url for HDX')] = None,
     output_format: OutputFormat = OutputFormat.JSON,
 ):
     """
     Provide a access to data in the HAPI datamart
     """
-    result = await get_datamart_data_srv(pagination_parameters=common_parameters)
+    result = await get_datamart_data_srv(pagination_parameters=common_parameters, download_url=download_url)
     return transform_result_to_csv_stream_if_requested(result, output_format, DatamartDataResponse)
