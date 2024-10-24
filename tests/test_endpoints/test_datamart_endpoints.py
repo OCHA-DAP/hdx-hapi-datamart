@@ -43,6 +43,7 @@ async def test_get_with_query_params(event_loop, endpoint):
             response = await ac.get(endpoint)
 
         assert response.status_code == 200
+
         assert len(response.json()['data']) > 0, (
             f'There should be at least one entry for parameter "{param_name}" with value "{param_value}" '
             'in the database'

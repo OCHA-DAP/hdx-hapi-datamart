@@ -2,6 +2,7 @@ from typing import Annotated, Optional
 from fastapi import Depends, Query, APIRouter
 
 
+from hdx_hapi.config.doc_snippets import DOC_HDX_RESOURCE_ID
 from hdx_hapi.endpoints.models.base import HapiGenericResponse
 from hdx_hapi.datamart.datamart_responses import (
     DatamartSearchResponse,
@@ -63,12 +64,19 @@ async def get_datamart_list(
 )
 async def get_datamart_search(
     common_parameters: Annotated[CommonEndpointParams, Depends(common_endpoint_parameters)],
+    fq: Annotated[
+        Optional[str], Query(max_length=128, description='Search HDX using a Solr format fq query string')
+    ] = None,
+    resource_hdx_id: Annotated[Optional[str], Query(max_length=36, description=f'{DOC_HDX_RESOURCE_ID}')] = None,
     output_format: OutputFormat = OutputFormat.JSON,
 ):
     """
     Provide a search facility to retreive metadata from HDX for use in the datamart /data endpoint
     """
-    result = await get_datamart_search_srv(pagination_parameters=common_parameters)
+    result = await get_datamart_search_srv(
+        pagination_parameters=common_parameters, fq=fq, resource_hdx_id=resource_hdx_id
+    )
+
     return transform_result_to_csv_stream_if_requested(result, output_format, DatamartSearchResponse)
 
 
