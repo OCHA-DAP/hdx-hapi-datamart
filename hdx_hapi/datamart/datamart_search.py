@@ -1,6 +1,5 @@
-import httpx
 from typing import Optional
-from httpx import AsyncClient, Client
+from httpx import AsyncClient
 from hdx_hapi.endpoints.util.util import PaginationParams
 
 from hdx_hapi.config.config import get_config

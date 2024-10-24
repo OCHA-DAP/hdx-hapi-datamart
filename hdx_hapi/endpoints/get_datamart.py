@@ -1,6 +1,5 @@
 from typing import Annotated, Optional
 from fastapi import Depends, Query, APIRouter
-from pydantic import HttpUrl, UrlConstraints
 
 
 from hdx_hapi.config.doc_snippets import DOC_HDX_RESOURCE_ID
