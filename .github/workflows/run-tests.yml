@@ -1,6 +1,10 @@
 name: Run tests
 
-on: [push]
+push:
+    branches: ["dev"]
+  pull_request:
+    branches: ["dev"]
+  workflow_dispatch:
 
 jobs:
   test:
