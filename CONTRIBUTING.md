@@ -4,7 +4,7 @@ The Humanitarian API (HDX HAPI) is being developed by a team from the [Centre fo
 
 HDX developers are using [Visual Code](https://code.visualstudio.com/) as a standard IDE for this project with development taking place inside Docker containers.
 
-The following needs to be run once to setup the Docker containers for testing:
+The `docker/.env.tpl` file needs to be copied to `docker/.env` and the file `COMPOSE_PROJECT_NAME` setting accordingly (`hapi_stack` or `hapi_datamart`). The following then needs to be run once to setup the Docker containers for testing:
 
 ```shell
 cd docker
@@ -15,13 +15,12 @@ docker-compose exec -T hapi sh -c "pip install --upgrade -r dev-requirements.txt
 ```
 This makes an editable installation of `hapi-sqlalchemy-schema` inside this repository.
 
-Then for each session the following needs to be run:
+Then for each session the following needs to be run - `docker compose start` ensures containers are not created accidently:
 ```shell
 cd docker
-docker-compose up -d
+docker-compose start
 cd ..
 ./initialize_db.sh
-docker-compose exec -T hapi sh -c "alembic upgrade head"
 ./initialize_test_db.sh
 ```
 
