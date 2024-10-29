@@ -10,7 +10,12 @@ PACKAGE_SEARCH_ENDPOINT = '/api/action/package_search'
 RESOURCE_SHOW_ENDPOINT = '/api/action/resource_show'
 
 
-async def datamart_search(pagination_params: PaginationParams, fq: Optional[str], resource_id: Optional[str] = None):
+async def datamart_search(
+    pagination_params: PaginationParams,
+    filter_query: Optional[str],
+    main_query: Optional[str],
+    resource_id: Optional[str] = None,
+):
     results = []
 
     # if fq is not None:
@@ -35,5 +40,30 @@ async def datamart_search(pagination_params: PaginationParams, fq: Optional[str]
             }
 
             results.append(resource)
+    elif filter_query is not None or main_query is not None:
+        params = {}
+        if filter_query is not None:
+            params['fq'] = filter_query
+        if main_query is not None:
+            params['q'] = main_query
+        async with AsyncClient() as ac:
+            url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
+            response = await ac.get(url, params=params)
+        response.raise_for_status()
+        response_items = response.json()
+
+        # Extract resources from response:
+        if 'result' in response_items:
+            for dataset in response_items['result']['results']:
+                for original_resource in dataset['resources']:
+                    resource = {
+                        'resource_name': original_resource['name'],
+                        'dataset_hdx_id': original_resource['package_id'],
+                        'resource_hdx_id': original_resource['id'],
+                        'format': original_resource['format'],
+                        'download_url': original_resource['download_url'],
+                    }
+
+                    results.append(resource)
 
     return results

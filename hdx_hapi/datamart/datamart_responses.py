@@ -51,3 +51,4 @@ class ListTypeEnum(str, Enum):
     DATASERIES = 'dataseries'
     HAPI_RESOURCES = 'hapi_resources'
     SOLR_QUERY_FIELDS = 'solr_query_fields'
+    ORGANIZATIONS = 'organizations'

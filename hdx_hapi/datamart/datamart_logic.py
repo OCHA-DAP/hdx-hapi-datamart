@@ -19,10 +19,11 @@ async def get_datamart_list_srv(pagination_parameters: PaginationParams, list_ty
 
 async def get_datamart_search_srv(
     pagination_parameters: PaginationParams,
-    fq: Optional[str] = None,
+    filter_query: Optional[str] = None,
+    main_query: Optional[str] = None,
     resource_hdx_id: Optional[str] = None,
 ):
-    results = await datamart_search(pagination_parameters, fq, resource_hdx_id)
+    results = await datamart_search(pagination_parameters, filter_query, main_query, resource_hdx_id)
     return results
 
 

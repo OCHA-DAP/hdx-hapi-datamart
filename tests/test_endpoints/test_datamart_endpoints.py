@@ -1,3 +1,5 @@
+import json
+
 import pytest
 import logging
 
@@ -24,7 +26,7 @@ async def test_get_with_query_params(event_loop, endpoint):
     query_parameters = endpoint_data['query_parameters']
     expected_fields = endpoint_data['expected_fields']
     for param_name, param_value in query_parameters.items():
-        log.info(f'Testing with paremeter: {param_name}={param_value}')
+        log.info(f'Testing with parameter: {param_name}={param_value}')
         async with AsyncClient(app=app, base_url='http://test', params={param_name: param_value}) as ac:
             response = await ac.get(endpoint)
 
@@ -41,3 +43,14 @@ async def test_get_with_query_params(event_loop, endpoint):
         assert len(response.json()['data'][0]) == len(
             expected_fields
         ), 'Response has a different number of fields than expected'
+
+
+@pytest.mark.asyncio
+async def test_get_search(event_loop):
+    log.info('started datamart search test')
+    params = {'filter_query': 'dataset_source:ETH\ Zurich\ Climada'}
+    async with AsyncClient(app=app, base_url='http://test', params=params) as ac:
+        response = await ac.get('/api/v1/datamart/search')
+
+    assert response.status_code == 200
+    assert len(response.json()['data']) == 157
