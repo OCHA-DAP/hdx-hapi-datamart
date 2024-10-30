@@ -18,27 +18,17 @@ async def datamart_search(
 ):
     results = []
 
-    # if fq is not None:
-    #     params = {'fq': fq, 'start': pagination_parameters.offset, 'rows': pagination_parameters.limit}
-    #     async with AsyncClient(app=app, base_url=CONFIG.HDX_DOMAIN, params=params) as ac:
-    #         response = await ac.get(PACKAGE_SEARCH_ENDPOINT)
     if resource_id is not None:
         params = {'id': resource_id}
-        async with AsyncClient() as ac:
-            url = f'{CONFIG.HDX_DOMAIN}{RESOURCE_SHOW_ENDPOINT}'
-            response = await ac.get(url, params=params)
-        response.raise_for_status()
-        response_items = response.json()
+        url = f'{CONFIG.HDX_DOMAIN}{RESOURCE_SHOW_ENDPOINT}'
+        response_items = await call_ckan_api(params, url)
 
         if 'result' in response_items:
-            resource = {
-                'resource_name': response_items['result']['name'],
-                'dataset_hdx_id': response_items['result']['package_id'],
-                'resource_hdx_id': response_items['result']['id'],
-                'format': response_items['result']['format'],
-                'download_url': response_items['result']['download_url'],
-            }
-
+            resource = select_resource_fields(response_items['result'])
+            params = {'fq': f'id:{resource["dataset_hdx_id"]}'}
+            url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
+            response_items = await call_ckan_api(params, url)
+            resource = decorate_with_dataset_metadata(response_items['result']['results'][0], resource)
             results.append(resource)
     elif filter_query is not None or main_query is not None:
         params = {}
@@ -46,24 +36,50 @@ async def datamart_search(
             params['fq'] = filter_query
         if main_query is not None:
             params['q'] = main_query
-        async with AsyncClient() as ac:
-            url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
-            response = await ac.get(url, params=params)
-        response.raise_for_status()
-        response_items = response.json()
 
+        url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
+        response_items = await call_ckan_api(params, url)
         # Extract resources from response:
         if 'result' in response_items:
             for dataset in response_items['result']['results']:
                 for original_resource in dataset['resources']:
-                    resource = {
-                        'resource_name': original_resource['name'],
-                        'dataset_hdx_id': original_resource['package_id'],
-                        'resource_hdx_id': original_resource['id'],
-                        'format': original_resource['format'],
-                        'download_url': original_resource['download_url'],
-                    }
+                    resource = select_resource_fields(original_resource)
+                    resource = decorate_with_dataset_metadata(dataset, resource)
 
                     results.append(resource)
 
     return results
+
+
+async def call_ckan_api(params: dict, url: str) -> dict:
+    async with AsyncClient() as ac:
+        response = await ac.get(url, params=params)
+    response.raise_for_status()
+    response_items = response.json()
+    return response_items
+
+
+def select_resource_fields(original_resource_record: dict) -> dict:
+    selected_resource = {
+        'resource_name': original_resource_record['name'],
+        'dataset_hdx_id': original_resource_record['package_id'],
+        'resource_hdx_id': original_resource_record['id'],
+        'format': original_resource_record['format'],
+        'download_url': original_resource_record['download_url'],
+        'created': original_resource_record['created'],
+        'last_modified': original_resource_record['last_modified'],
+        'metadata_modified': original_resource_record['metadata_modified'],
+        'position': original_resource_record['position'],
+        'size': original_resource_record['size'],
+    }
+
+    return selected_resource
+
+
+def decorate_with_dataset_metadata(dataset_metadata: dict, resource: dict) -> dict:
+    resource['dataset_title'] = dataset_metadata['title']
+    resource['dataset_name'] = dataset_metadata['name']
+    resource['dataset_notes'] = dataset_metadata['notes']
+    resource['dataset_subnational'] = dataset_metadata['subnational']
+    resource['dataset_updated_by_script'] = dataset_metadata['updated_by_script']
+    return resource
