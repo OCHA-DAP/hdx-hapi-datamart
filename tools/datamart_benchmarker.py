@@ -1,5 +1,6 @@
 import csv
 import datetime
+import httpx
 import logging
 import logging.config
 import os
@@ -41,11 +42,12 @@ def get_app_identifier(
     return app_identifier
 
 
-def climada_benchmark():
-    log.info('started datamart benchmark test')
+def benchmark(filename, query):
+    log.info(f'Started datamart benchmarking: {filename}')
+
     app_identifier = get_app_identifier()
 
-    output_filepath = os.path.join(os.path.dirname(__file__), 'benchmark-results', 'climada-benchmark.csv')
+    output_filepath = os.path.join(os.path.dirname(__file__), 'benchmark-results', filename)
     already_done_set = set()
     if not os.path.exists(output_filepath):
         with open(
@@ -65,8 +67,8 @@ def climada_benchmark():
             else:
                 already_done_set = set()
 
-    print(already_done_set, flush=True)
-    params = {'filter_query': r'dataset_source:ETH\ Zurich\ Climada', 'app_identifier': app_identifier}
+    params = query
+    params['app_identifier'] = app_identifier
     with Client(base_url=DATAMART_ROOT_URL, params=params) as ac:
         response = ac.get('/api/v1/datamart/search')
 
@@ -74,8 +76,8 @@ def climada_benchmark():
 
     results = []
     for i, record in enumerate(response.json()['data'], start=1):
-        if i > 5:
-            break
+        # if i > 5:
+        #     break
         if record['resource_hdx_id'] in already_done_set:
             print(f"{i}, {record['resource_name']} - already done", flush=True)
             continue
@@ -86,21 +88,29 @@ def climada_benchmark():
             'download_url': record['download_url'],
             'app_identifier': app_identifier,
         }
-        with Client(base_url=DATAMART_ROOT_URL, params=params) as ac:
-            response = ac.get('/api/v1/datamart/data')
-        response.raise_for_status()
-        query_time = f'{time.time() - t0:0.2f}'
-        print(f'{time.time() - t0:0.2f}, {len(response.json()["data"])}', flush=True)
-
         result_row = RESULT_TEMPLATE.copy()
         result_row['datetime'] = datetime.datetime.now().isoformat()
         result_row['resource_id'] = record['resource_hdx_id']
         result_row['resource_name'] = record['resource_name']
         result_row['download_url'] = record['download_url']
         result_row['size'] = record['size']
-        result_row['returned_row_count'] = len(response.json()['data'])
-        result_row['query_time'] = query_time
-        result_row['success'] = True
+
+        try:
+            with Client(base_url=DATAMART_ROOT_URL, params=params, timeout=60) as ac:
+                response = ac.get('/api/v1/datamart/data')
+            response.raise_for_status()
+            query_time = f'{time.time() - t0:0.2f}'
+            print(f'{query_time}, {len(response.json()['data'])}', flush=True)
+            result_row['returned_row_count'] = len(response.json()['data'])
+            result_row['query_time'] = query_time
+            result_row['success'] = True
+        except httpx.ReadTimeout:
+            query_time = f'{time.time() - t0:0.2f}'
+            print(f'{query_time}, failed', flush=True)
+            result_row['returned_row_count'] = None
+            result_row['query_time'] = query_time
+            result_row['success'] = False
+
         with open(output_filepath, 'a', encoding='utf-8') as output_file:
             writer = csv.DictWriter(output_file, fieldnames=result_row.keys())
             writer.writerow(result_row)
@@ -108,4 +118,10 @@ def climada_benchmark():
 
 
 if __name__ == '__main__':
-    climada_benchmark()
+    # filename = 'climada-benchmark.csv'
+    # query = {'filter_query': r'dataset_source:ETH\ Zurich\ Climada'}
+    # benchmark(filename, query)
+
+    filename = 'insecurity-insight-benchmark.csv'
+    query = {'filter_query': r'dataset_source:Insecurity\ Insight'}
+    benchmark(filename, query)

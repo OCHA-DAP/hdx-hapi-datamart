@@ -14,7 +14,11 @@ async def datamart_data(pagination_parameters: PaginationParams, download_url: O
     results = []
 
     if download_url is not None:
-        dataframe = pandas.read_csv(download_url)
+        # Quick and dirty file type detection
+        if download_url.lower().endswith('.xls') or download_url.lower().endswith('.xlsx'):
+            dataframe = pandas.read_excel(download_url)
+        else:
+            dataframe = pandas.read_csv(download_url)
         dataframe = dataframe.astype(str)
         results = dataframe.to_dict('records')
         # Pop HXL row if it exists - not yet implemented - you can set offset=1 if you know it's HXL-ated
