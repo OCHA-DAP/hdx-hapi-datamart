@@ -1,8 +1,16 @@
+import logging
+import logging.config
+import os
+import urllib
 import pandas
 from typing import Optional
 from hdx_hapi.endpoints.util.util import PaginationParams
 
 from hdx_hapi.config.config import get_config
+
+logging.config.fileConfig(os.getenv('LOGGING_CONF_FILE', 'logging.conf'))
+
+log = logging.getLogger(__name__)
 
 CONFIG = get_config()
 
@@ -15,12 +23,16 @@ async def datamart_data(pagination_parameters: PaginationParams, download_url: O
 
     if download_url is not None:
         # Quick and dirty file type detection
-        if download_url.lower().endswith('.xls') or download_url.lower().endswith('.xlsx'):
-            dataframe = pandas.read_excel(download_url)
-        else:
-            dataframe = pandas.read_csv(download_url)
-        dataframe = dataframe.astype(str)
-        results = dataframe.to_dict('records')
+        try:
+            if download_url.lower().endswith('.xls') or download_url.lower().endswith('.xlsx'):
+                dataframe = pandas.read_excel(download_url)
+            else:
+                dataframe = pandas.read_csv(download_url)
+            dataframe = dataframe.astype(str)
+            results = dataframe.to_dict('records')
+        except urllib.error.HTTPError as exc:
+            log.info(exc)
+
         # Pop HXL row if it exists - not yet implemented - you can set offset=1 if you know it's HXL-ated
         try:
             results = results[

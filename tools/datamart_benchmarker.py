@@ -35,7 +35,7 @@ def get_app_identifier(
         f'{DATAMART_ROOT_URL}/api/v1/encode_app_identifier?application={app_name}&email={email_address}'
     )
     with Client() as ac:
-        response = ac.get(app_identifier_url)
+        response = ac.get(app_identifier_url, timeout=60)
 
     response.raise_for_status()
     app_identifier = response.json()['encoded_app_identifier']
@@ -69,18 +69,24 @@ def benchmark(filename, query):
 
     params = query
     params['app_identifier'] = app_identifier
-    with Client(base_url=DATAMART_ROOT_URL, params=params) as ac:
-        response = ac.get('/api/v1/datamart/search')
+    try:
+        with Client(base_url=DATAMART_ROOT_URL, params=params, timeout=60) as ac:
+            response = ac.get('/api/v1/datamart/search')
 
-    response.raise_for_status()
+        response.raise_for_status()
+    except:
+        log.info(f'Failed on search with query params {params}')
+        pass
 
     results = []
+    n_downloads = 0
     for i, record in enumerate(response.json()['data'], start=1):
-        # if i > 5:
-        #     break
         if record['resource_hdx_id'] in already_done_set:
             print(f"{i}, {record['resource_name']} - already done", flush=True)
             continue
+        n_downloads += 1
+        if n_downloads > 5:
+            break
 
         t0 = time.time()
         print(i, record['resource_name'], record['size'], flush=True)
@@ -115,6 +121,8 @@ def benchmark(filename, query):
             writer = csv.DictWriter(output_file, fieldnames=result_row.keys())
             writer.writerow(result_row)
         results.append(result_row)
+        log.info('Waiting for 2 seconds')
+        time.sleep(2)
 
 
 if __name__ == '__main__':

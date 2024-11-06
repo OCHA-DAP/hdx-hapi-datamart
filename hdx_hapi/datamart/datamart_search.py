@@ -1,3 +1,6 @@
+import time
+import httpx
+
 from typing import Optional
 from httpx import AsyncClient
 from hdx_hapi.endpoints.util.util import PaginationParams
@@ -52,9 +55,15 @@ async def datamart_search(
 
 
 async def call_ckan_api(params: dict, url: str) -> dict:
-    async with AsyncClient() as ac:
-        response = await ac.get(url, params=params)
-    response.raise_for_status()
+    t0 = time.time()
+    try:
+        async with AsyncClient() as ac:
+            response = await ac.get(url, params=params, timeout=60)
+        response.raise_for_status()
+    except httpx.ConnectTimeout:
+        print(f'**Timeout in {time.time() - t0:0.2f} seconds')
+        response = None
+
     response_items = response.json()
     return response_items
 
