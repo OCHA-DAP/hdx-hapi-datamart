@@ -1,6 +1,5 @@
 import csv
 import datetime
-import httpx
 import logging
 import logging.config
 import os

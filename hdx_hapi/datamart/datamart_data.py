@@ -1,7 +1,6 @@
 import logging
 import logging.config
 import os
-import urllib
 import pandas
 
 from typing import Optional
@@ -32,7 +31,7 @@ async def datamart_data(pagination_parameters: PaginationParams, download_url: O
                 dataframe = pandas.read_csv(download_url)
             dataframe = dataframe.astype(str)
             results = dataframe.to_dict('records')
-        except FileNotFoundError as exc:
+        except FileNotFoundError:
             raise HTTPException(status_code=204, detail=f'Resource not found for URL {download_url}')
         except pandas.errors.ParserError:
             raise HTTPException(status_code=422, detail=f'Resource could not be parsed for URL {download_url}')
