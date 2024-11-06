@@ -34,6 +34,8 @@ async def datamart_data(pagination_parameters: PaginationParams, download_url: O
             results = dataframe.to_dict('records')
         except FileNotFoundError as exc:
             raise HTTPException(status_code=204, detail=f'Resource not found for URL {download_url}')
+        except pandas.errors.ParserError:
+            raise HTTPException(status_code=422, detail=f'Resource could not be parsed for URL {download_url}')
 
         # Pop HXL row if it exists - not yet implemented - you can set offset=1 if you know it's HXL-ated
         try:

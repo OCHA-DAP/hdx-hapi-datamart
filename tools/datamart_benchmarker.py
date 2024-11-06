@@ -74,9 +74,8 @@ def benchmark(filename, query):
             response = ac.get('/api/v1/datamart/search')
 
         response.raise_for_status()
-    except:
-        log.info(f'Failed on search with query params {params}')
-        pass
+    except Exception as exc:
+        log.info(f'Failed on search with query params {params}, error {str(exc)}')
 
     results = []
     n_downloads = 0
@@ -110,9 +109,9 @@ def benchmark(filename, query):
             result_row['returned_row_count'] = len(response.json()['data'])
             result_row['query_time'] = query_time
             result_row['success'] = True
-        except httpx.ReadTimeout:
+        except Exception as exc:
             query_time = f'{time.time() - t0:0.2f}'
-            print(f'{query_time}, failed', flush=True)
+            print(f'{query_time}, failed with {exc}', flush=True)
             result_row['returned_row_count'] = None
             result_row['query_time'] = query_time
             result_row['success'] = False
@@ -130,6 +129,10 @@ if __name__ == '__main__':
     # query = {'filter_query': r'dataset_source:ETH\ Zurich\ Climada'}
     # benchmark(filename, query)
 
-    filename = 'insecurity-insight-benchmark.csv'
-    query = {'filter_query': r'dataset_source:Insecurity\ Insight'}
+    # filename = 'insecurity-insight-benchmark.csv'
+    # query = {'filter_query': r'dataset_source:Insecurity\ Insight'}
+    # benchmark(filename, query)
+
+    filename = 'lucky-dip-csv-xls.csv'
+    query = {'lucky_dip': True}
     benchmark(filename, query)
