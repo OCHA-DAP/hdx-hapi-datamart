@@ -54,3 +54,14 @@ async def test_get_search(event_loop):
 
     assert response.status_code == 200
     assert len(response.json()['data']) == 157
+
+
+@pytest.mark.asyncio
+async def test_get_search_lucky_dip(event_loop):
+    log.info('Started datamart lucky dip search test')
+    params = {'lucky_dip': True}
+    async with AsyncClient(app=app, base_url='http://test', params=params) as ac:
+        response = await ac.get('/api/v1/datamart/search')
+
+    assert response.status_code == 200
+    assert len(response.json()['data']) == 1

@@ -13,6 +13,9 @@ datamart_endpoint_data = {
     '/api/v1/datamart/search': {
         'query_parameters': {
             'resource_hdx_id': '96b24403-0de4-4652-bb76-f585c04b5e6d',
+            'lucky_dip': True,
+            'main_query': '*:*',
+            'filter_query': 'res_format:(CSV and XLS)',
         },
         'expected_fields': [
             'resource_name',

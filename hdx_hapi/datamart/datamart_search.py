@@ -110,9 +110,9 @@ def select_resource_fields(original_resource_record: dict) -> dict:
 
 
 def decorate_with_dataset_metadata(dataset_metadata: dict, resource: dict) -> dict:
-    resource['dataset_title'] = dataset_metadata['title']
-    resource['dataset_name'] = dataset_metadata['name']
-    resource['dataset_notes'] = dataset_metadata['notes']
-    resource['dataset_subnational'] = dataset_metadata['subnational']
-    resource['dataset_updated_by_script'] = dataset_metadata['updated_by_script']
+    resource['dataset_title'] = dataset_metadata.get('title', '')
+    resource['dataset_name'] = dataset_metadata.get('name', '')
+    resource['dataset_notes'] = dataset_metadata.get('notes', '')
+    resource['dataset_subnational'] = dataset_metadata.get('subnational', '')
+    resource['dataset_updated_by_script'] = dataset_metadata.get('updated_by_script', '')
     return resource
