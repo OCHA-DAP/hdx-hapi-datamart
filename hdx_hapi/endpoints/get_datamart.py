@@ -73,6 +73,7 @@ async def get_datamart_search(
     filter_query: Annotated[
         Optional[str], Query(max_length=1024, description='Search HDX using a Solr filter query expression')
     ] = None,
+    lucky_dip: Annotated[Optional[bool], Query(description='Return a random resource record from HDX')] = None,
     output_format: OutputFormat = OutputFormat.JSON,
 ):
     """
@@ -83,6 +84,7 @@ async def get_datamart_search(
         resource_hdx_id=resource_hdx_id,
         main_query=main_query,
         filter_query=filter_query,
+        lucky_dip=lucky_dip,
     )
 
     return transform_result_to_csv_stream_if_requested(result, output_format, DatamartSearchResponse)

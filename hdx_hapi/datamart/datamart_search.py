@@ -1,6 +1,8 @@
+import random
 import time
 import httpx
 
+from random import randrange
 from typing import Optional
 from httpx import AsyncClient
 from hdx_hapi.endpoints.util.util import PaginationParams
@@ -18,6 +20,7 @@ async def datamart_search(
     filter_query: Optional[str],
     main_query: Optional[str],
     resource_id: Optional[str] = None,
+    lucky_dip: Optional[bool] = None,
 ):
     results = []
 
@@ -50,6 +53,27 @@ async def datamart_search(
                     resource = decorate_with_dataset_metadata(dataset, resource)
 
                     results.append(resource)
+    elif lucky_dip:
+        # Call package search to get a number of datasets (we could hard code this) - filter to
+        url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
+        params = {'fq': 'res_format:(CSV and XLS)'}
+        response_items = await call_ckan_api(params, url)
+        n_datasets = response_items['result']['count']
+
+        # Make a random offset in the range 0, n datasets
+        random_start = randrange(0, n_datasets)
+        # query with offset (start) = random, limit (rows) = 1
+        params['start'] = random_start
+        params['rows'] = 1
+        random_item = await call_ckan_api(params, url)
+        # Pick first resource?
+        if 'result' in random_item:
+            dataset = random_item['result']['results'][0]
+            selected_resource = dataset['resources'][randrange(0, len(dataset['resources']))]
+            resource = select_resource_fields(selected_resource)
+            resource = decorate_with_dataset_metadata(dataset, resource)
+
+            results.append(resource)
 
     return results
 

@@ -22,8 +22,9 @@ async def get_datamart_search_srv(
     filter_query: Optional[str] = None,
     main_query: Optional[str] = None,
     resource_hdx_id: Optional[str] = None,
+    lucky_dip: Optional[bool] = None,
 ):
-    results = await datamart_search(pagination_parameters, filter_query, main_query, resource_hdx_id)
+    results = await datamart_search(pagination_parameters, filter_query, main_query, resource_hdx_id, lucky_dip)
     return results
 
 
