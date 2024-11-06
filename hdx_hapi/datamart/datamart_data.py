@@ -3,7 +3,9 @@ import logging.config
 import os
 import urllib
 import pandas
+
 from typing import Optional
+from fastapi import HTTPException
 from hdx_hapi.endpoints.util.util import PaginationParams
 
 from hdx_hapi.config.config import get_config
@@ -30,8 +32,8 @@ async def datamart_data(pagination_parameters: PaginationParams, download_url: O
                 dataframe = pandas.read_csv(download_url)
             dataframe = dataframe.astype(str)
             results = dataframe.to_dict('records')
-        except urllib.error.HTTPError as exc:
-            log.info(exc)
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=204, detail=f'Resource not found for URL {download_url}')
 
         # Pop HXL row if it exists - not yet implemented - you can set offset=1 if you know it's HXL-ated
         try:
