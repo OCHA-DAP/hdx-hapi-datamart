@@ -22,6 +22,7 @@ SUMMARY_TEXT = 'Display the API and SQL Alchemy versions'
     summary=SUMMARY_TEXT,
 )
 async def get_version():
+    """Provides version information for the API and the schema"""
     result = {
         'api_version': hapi_version.api_version,
         'hapi_sqlalchemy_schema_version': hapi_version.hapi_sqlalchemy_schema_version,

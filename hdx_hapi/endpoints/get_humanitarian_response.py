@@ -61,7 +61,7 @@ async def get_org(
     ] = None,
     output_format: OutputFormat = OutputFormat.JSON,
 ):
-    """ """
+    """The organization table is populated from the 3W data"""
     result = await get_orgs_srv(
         pagination_parameters=common_parameters,
         db=db,

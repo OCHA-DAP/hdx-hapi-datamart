@@ -1,6 +1,7 @@
 import csv
 import os
 
+from httpx import Client
 from hdx_hapi.datamart.datamart_responses import ListTypeEnum
 from hdx_hapi.endpoints.util.util import PaginationParams
 
@@ -31,6 +32,22 @@ async def datamart_list(pagination_parameters: PaginationParams, list_type: List
             rows = list(csv.DictReader(tags_file))
 
         results = [{'value': x['tag'], 'description': x['description']} for x in rows]
+    elif list_type == ListTypeEnum.HAPI_RESOURCES:
+        openapi_url = 'https://hapi.humdata.org/openapi.json'
+        with Client() as ac:
+            response = ac.get(openapi_url)
+
+        response.raise_for_status()
+
+        results = []
+        records = response.json()['paths']
+        for path_ in records.keys():
+            try:
+                description = records[path_]['get']['description']
+            except KeyError:
+                description = ''
+            row = {'value': path_, 'description': description}
+            results.append(row)
 
     try:
         results = results[pagination_parameters.offset : (pagination_parameters.offset + pagination_parameters.limit)]
