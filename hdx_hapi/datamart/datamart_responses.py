@@ -12,7 +12,7 @@ from hdx_hapi.endpoints.models.base import HapiBaseModel
 
 class DatamartListResponse(HapiBaseModel):
     value: str = Field(max_length=512, description='List entry value')
-    description: str = Field(max_length=512, description='List entry description')
+    description: str = Field(max_length=10000, description='List entry description')
 
     model_config = ConfigDict(from_attributes=True)
 

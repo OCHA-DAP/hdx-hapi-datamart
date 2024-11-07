@@ -48,6 +48,18 @@ async def datamart_list(pagination_parameters: PaginationParams, list_type: List
                 description = ''
             row = {'value': path_, 'description': description}
             results.append(row)
+    elif list_type == ListTypeEnum.ORGANIZATIONS:
+        organisation_list_url = 'https://data.humdata.org/api/action/organization_list?all_fields=True'
+        with Client() as ac:
+            response = ac.get(organisation_list_url, timeout=60)
+
+        response.raise_for_status()
+
+        results = []
+        records = response.json()['result']
+        for record in records:
+            row = {'value': record['name'], 'description': record['description']}
+            results.append(row)
 
     try:
         results = results[pagination_parameters.offset : (pagination_parameters.offset + pagination_parameters.limit)]
