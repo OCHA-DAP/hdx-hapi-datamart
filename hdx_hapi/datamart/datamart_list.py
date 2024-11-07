@@ -22,11 +22,16 @@ async def datamart_list(pagination_parameters: PaginationParams, list_type: List
             if len(x['ISO 3166-1 Alpha 3-Codes']) == 3
         ]
     elif list_type == ListTypeEnum.DATASERIES:
-        with open(os.path.join(DATAFILE_ROOT, '2023-11-dataseries_summary.csv'), encoding='utf-8') as countries_file:
-            # Pop off the HXL row
-            rows = list(csv.DictReader(countries_file))[1:]
+        with open(os.path.join(DATAFILE_ROOT, '2023-11-dataseries_summary.csv'), encoding='utf-8') as dataseries_file:
+            rows = list(csv.DictReader(dataseries_file))
 
         results = [{'value': x['Data series name'], 'description': ''} for x in rows]
+    elif list_type == ListTypeEnum.TAGS:
+        with open(os.path.join(DATAFILE_ROOT, '2024-10-hdx-accepted-tags.csv'), encoding='utf-8') as tags_file:
+            rows = list(csv.DictReader(tags_file))
+
+        results = [{'value': x['tag'], 'description': x['description']} for x in rows]
+
     try:
         results = results[pagination_parameters.offset : (pagination_parameters.offset + pagination_parameters.limit)]
     except IndexError:
