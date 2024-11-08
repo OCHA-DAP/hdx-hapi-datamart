@@ -7,6 +7,17 @@ from hdx_hapi.endpoints.util.util import PaginationParams
 
 DATAFILE_ROOT = os.path.join(os.path.dirname(__file__), 'list-data')
 
+"""
+Sources for the list data:
+1.	tags - from this file: https://docs.google.com/spreadsheets/d/e/2PACX-1vQD3ba751XbWS5GVwdJmzOF9mc7dnm56hE2U8di12JnpYkdseILmjfGSn1W7UVQzmHKSd6p8FWaXdFL/pub?gid=1768359211&single=true&output=csv - DONE 
+2.	ISO-3 country codes - from this file: https://github.com/OCHA-DAP/hdx-python-country/blob/main/src/hdx/location/Countries%20%26%20Territories%20Taxonomy%20MVP%20-%20C%26T%20Taxonomy%20with%20HXL%20Tags.csv - DONE
+3.	dataseries - from this file: https://github.com/OCHA-DAP/HDX_data_series/blob/main/23-11-dataseries_summary.csv  - DONE
+4.	HAPI_resources (the existing endpoints) - from this file: https://hapi.humdata.org/openapi.json - DONE
+5.	solr_query fields - from this file: https://docs.google.com/spreadsheets/d/1OzDQrnUZXiI1RuveE0HWVgbHDkohyJToRJnraDZMJOI/edit?pli=1&gid=0#gid=0 - DONE
+6.	organizations – there is an organization list query with CKAN https://data.humdata.org/api/action/organization_list?all_fields=True - DONE
+
+"""  # noqa
+
 
 async def datamart_list(pagination_parameters: PaginationParams, list_type: ListTypeEnum):
     results = []
