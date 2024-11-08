@@ -60,6 +60,17 @@ async def datamart_list(pagination_parameters: PaginationParams, list_type: List
         for record in records:
             row = {'value': record['name'], 'description': record['description']}
             results.append(row)
+    elif list_type == ListTypeEnum.SOLR_QUERY_FIELDS:
+        with open(
+            os.path.join(DATAFILE_ROOT, '2024-11-08-hdx-fields-in-solr.csv'), encoding='utf-8'
+        ) as query_fields_file:
+            rows = list(csv.DictReader(query_fields_file))[1:]
+
+        results = [
+            {'value': x['Field Name'], 'description': x['Example (package_search)']}
+            for x in rows
+            if x['Queryable'].lower() == 'yes'
+        ]
 
     try:
         results = results[pagination_parameters.offset : (pagination_parameters.offset + pagination_parameters.limit)]

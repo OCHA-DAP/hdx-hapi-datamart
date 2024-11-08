@@ -1,0 +1,110 @@
+Field Name,Queryable,Level,Type,Example (package_search),Notes,Source
+archived,Yes,Dataset,boolean,archived:true,,gibraltar test fixture
+author,,Dataset,text,,,schema.xml
+author_email,,Dataset,text,,,schema.xml
+batch,Yes,Dataset,text,batch:116ab051-4151-4a78-a61f-f57204df18e6,,gibraltar test fixture
+capacity,,Dataset,text,,,schema.xml
+caveats,Yes,Dataset,text,caveats:HDX\ HAPI*,,gibraltar test fixture
+child_of,,Dataset,text,,,schema.xml
+ckan_url,,Dataset,text,,,schema.xml
+creator_user_id,Yes,Dataset,text,creator_user_id:a410b53c-3466-4517-a7d7-*,,gibraltar test fixture
+data_dict,,Dataset,text,,,schema.xml
+data_update_frequency,Yes,Dataset,text,data_update_frequency:90,,gibraltar test fixture
+dataseries_name,Yes,Dataset,string,"dataseries_name:""Global Healthsites Mapping Project - Healthsites""",,Alex
+dataset_date,No,Dataset,text,,,gibraltar test fixture
+dataset_preview,Yes,Dataset,text,dataset_preview:first_resource,,gibraltar test fixture
+dataset_source,Yes,Dataset,text,"dataset_source: ""OpenStreetMap contributors""",,gibraltar test fixture
+dataset_type,,Dataset,text,,,schema.xml
+dependency_of,,Dataset,text,,,schema.xml
+depends_on,,Dataset,text,,,schema.xml
+derives_from,,Dataset,text,,,schema.xml
+due_date,No,Dataset,date,"due_date:""2024-05-08T17:22:36Z""","We need the ""Z"" at the end of the date!",gibraltar test fixture
+entity_type,,Dataset,text,,,schema.xml
+extras_archived,Yes,Dataset,text,extras_archived:true,,Alex
+extras_data_update_frequency,Yes,Dataset,text,extras_data_update_frequency:7,,Alex
+extras_dataset_source,,Dataset,text,"extras_dataset_source: ""OpenStreetMap contributors""",,Alex
+extras_is_requestdata_type,Yes,Dataset,text,extras_is_requestdata_type:true,,Alex
+extras_subnational,Yes,Dataset,text,extras_subnational:1,,Alex
+groups,No,Dataset,text,,groups is searchable but not specifically,gibraltar test fixture
+has_derivation,,Dataset,text,,,schema.xml
+has_geodata,Yes,Dataset,boolean,has_geodata:true,,Alex
+has_quickcharts,Yes,Dataset,boolean,has_quickcharts:true,,Alex
+has_showcases,Yes,Dataset,boolean,has_showcases:true,,Alex
+id,Yes,Dataset,text,id:0f118f3f-44f7-4c6a-976d-a736e33b6cba,,gibraltar test fixture
+index_id,,Dataset,text,,,schema.xml
+is_requestdata_type,Yes,Dataset,boolean,is_requestdata_type:true,,gibraltar test fixture
+isopen,Yes,Dataset,boolean,isopen:true,,gibraltar test fixture
+last_modified,Yes,Dataset,date,"last_modified:""2024-02-08T17:22:36.996309Z""",,gibraltar test fixture
+license,No,Dataset,text,,,schema.xml
+license_id,Yes,Dataset,text,license_id:ODbL,,gibraltar test fixture
+license_title,Yes,Dataset,text,license_title:ODbL,,gibraltar test fixture
+linked_from,,Dataset,text,,,schema.xml
+links_to,,Dataset,text,,,schema.xml
+maintainer,Yes,Dataset,text,maintainer:a68dc722-a926-468b-92e8-84fe337ed173,The CKAN user id,Alex
+maintainer_email,,Dataset,text,,Querying for maintainer_email:* returns datasets but they don't have the maintainer_email key,schema.xml
+metadata_created,Yes,Dataset,text,"metadata_created:""2019-12-04T10:23:27.806321Z""",,gibraltar test fixture
+metadata_modified,Yes,Dataset,text,"metadata_modified:""2024-04-24T08:16:39.337098Z""",,schema.xml
+methodology,Yes,Dataset,string,"methodology:""Social Media and institutional sharing""",,Alex
+name,Yes,Dataset,text,name:gibraltar-healthsites,,gibraltar test fixture
+notes,Yes,Dataset,text,"notes:""The dataset*""",,gibraltar test fixture
+num_of_showcases,Yes,Dataset,int,num_of_showcases:1,,Alex
+num_resources,Yes,Dataset,text,num_resources:1,,gibraltar test fixture
+num_tags,Yes,Dataset,text,num_tags:1,,gibraltar test fixture
+organization,Yes,Dataset,text,organization:*healthsites,,gibraltar test fixture
+overdue_date,Yes,Dataset,text,"overdue_date:""2024-11-09T12:01:37Z""",,gibraltar test fixture
+owner_org,Yes,Dataset,text,owner_org:a1c0e6c7-a3e4-4db3-9955-cec338e8e935,,gibraltar test fixture
+package_creator,Yes,Dataset,text,package_creator:Amadou,,gibraltar test fixture
+pageviews_last_14_days,Yes,Dataset,int,pageviews_last_14_days:10,,Alex
+parent_of,No,Dataset,text,,This is queryable but does not appear in responses,schema.xml
+permission_labels,No,Dataset,text,,,schema.xml
+qa_completed,Yes,Dataset,boolean,qa_completed:true,,gibraltar test fixture
+relationships_as_object,No,Dataset,text,,,gibraltar test fixture
+relationships_as_subject,No,Dataset,text,,,gibraltar test fixture
+res_alt_url,No,Resource,text,,,gibraltar test fixture
+res_cache_last_updated,No,Resource,text,,,gibraltar test fixture
+res_cache_url,No,Resource,text,,,gibraltar test fixture
+res_created,No,Resource,text,,,gibraltar test fixture
+res_datastore_active,No,Resource,text,,,gibraltar test fixture
+res_description,Yes,Resource,text,res_description:Conflict*,,gibraltar test fixture
+res_download_url,No,Resource,text,,,gibraltar test fixture
+res_extras_broken_link,Yes,Resource,text,res_extras_broken_link:true,,Alex
+res_extras_in_hapi,Yes,Resource,text,res_extras_in_hapi:yes,,Alex
+res_extras_in_quarantine,No,Resource,text,,,Alex
+res_format,Yes,Resource,text,res_format:CSV,,gibraltar test fixture
+res_hash,No,Resource,text,,,gibraltar test fixture
+res_hdx_rel_url,No,Resource,text,,,gibraltar test fixture
+res_id,No,Resource,text,,,gibraltar test fixture
+res_last_modified,No,Resource,text,,,gibraltar test fixture
+res_metadata_modified,No,Resource,text,,,gibraltar test fixture
+res_microdata,No,Resource,text,,,gibraltar test fixture
+res_mimetype,No,Resource,text,,,gibraltar test fixture
+res_mimetype_inner,No,Resource,text,,,gibraltar test fixture
+res_name,Yes,Resource,text,res_name:gibraltar-healthsites-csv-with-hxl-tags,,gibraltar test fixture
+res_package_id,No,Resource,text,,,gibraltar test fixture
+res_position,No,Resource,int,,,gibraltar test fixture
+res_quickcharts,No,Resource,text,,,gibraltar test fixture
+res_resource_type,No,Resource,text,,,gibraltar test fixture
+res_shape_info,No,Resource,text,,,gibraltar test fixture
+res_size,No,Resource,text,,,gibraltar test fixture
+res_state,No,Resource,text,,,gibraltar test fixture
+res_url,Yes,Resource,text,"res_url:""https://s3.dualstack.us-east-1.amazonaws.com/production-raw-data-api/ISO3/TWN/roads/lines/hotosm_twn_roads_lines_shp.zip""",,gibraltar test fixture
+res_url_type,No,Resource,text,,,gibraltar test fixture
+resources,No,Dataset,list of dicts,,,gibraltar test fixture
+resources_accessed_recent,No,Dataset,text,,,schema.xml
+resources_accessed_total,No,Dataset,text,,,schema.xml
+review_date,Yes,Dataset,date,"review_date:""2024-01-15T09:40:20.630526Z""",Date when contributor reviewed dataset and marked it as being up-to-date,Alex
+revision_id,No,Dataset,text,,,schema.xml
+site_id,No,Dataset,text,,"Queryable but not in responses, it is pre-pended to all searches",schema.xml
+solr_additions,Yes,Dataset,text,"solr_additions:""{\""countries\"":[\""Nepal\""]}""",,gibraltar test fixture
+state,Yes,Dataset,text,state:active,"Queryable but pointless because everything is ""active""",gibraltar test fixture
+subnational,Yes,Dataset,text,subnational:1,,gibraltar test fixture
+title,Yes,Dataset,text,"title:""Nepal Buildings (OpenStreetMap Export)""",,gibraltar test fixture
+total_res_downloads,Yes,Dataset,int,total_res_downloads:10,Total resource downloads,Alex
+type,Yes,Dataset,text,type:dataset,Everything is a dataset,gibraltar test fixture
+updated_by_script,Yes,Dataset,text,"updated_by_script:""HDXPythonLibrary/6.2.8-HDXPythonLibrary/6.2.0-HOTOSM%20OSM%20Exports%20(2024-11-08T07:03:17.935403)""",,gibraltar test fixture
+url,Yes,Dataset,text,fq=url:[* TO *],This gives us non-null entries,gibraltar test fixture
+validated_data_dict,No,Dataset,text,,,schema.xml
+version,No,Dataset,text,,,gibraltar test fixture
+views_recent,No,Dataset,text,,Queryable but pointless,schema.xml
+views_total,No,Dataset,text,,,schema.xml
+vocab_Topics,Yes,Dataset,text,vocab_Topics:disability,This actually queries tags,schema.xml
