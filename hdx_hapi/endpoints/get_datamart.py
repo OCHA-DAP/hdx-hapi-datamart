@@ -67,13 +67,24 @@ async def get_datamart_search(
         Optional[str], Query(max_length=128, description='Search HDX using a Solr format fq query string')
     ] = None,
     resource_hdx_id: Annotated[Optional[str], Query(max_length=36, description=f'{DOC_HDX_RESOURCE_ID}')] = None,
+    main_query: Annotated[
+        Optional[str], Query(max_length=1024, description='Search HDX using a Solr main query expression')
+    ] = None,
+    filter_query: Annotated[
+        Optional[str], Query(max_length=1024, description='Search HDX using a Solr filter query expression')
+    ] = None,
+    lucky_dip: Annotated[Optional[bool], Query(description='Return a random resource record from HDX')] = None,
     output_format: OutputFormat = OutputFormat.JSON,
 ):
     """
     Provide a search facility to retreive metadata from HDX for use in the datamart /data endpoint
     """
     result = await get_datamart_search_srv(
-        pagination_parameters=common_parameters, fq=fq, resource_hdx_id=resource_hdx_id
+        pagination_parameters=common_parameters,
+        resource_hdx_id=resource_hdx_id,
+        main_query=main_query,
+        filter_query=filter_query,
+        lucky_dip=lucky_dip,
     )
 
     return transform_result_to_csv_stream_if_requested(result, output_format, DatamartSearchResponse)

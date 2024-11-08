@@ -1,3 +1,4 @@
+import datetime
 from enum import Enum
 from pydantic import ConfigDict, Field, HttpUrl
 from hdx_hapi.config.doc_snippets import (
@@ -35,6 +36,16 @@ class DatamartSearchResponse(HapiBaseModel):
         description='A URL to directly download the resource file from HDX, in the format '
         'specified in the `format` field.'
     )
+    created: datetime.datetime = Field(description='Datetime that the resource was created')
+    last_modified: datetime.datetime = Field(description='Datetime that the resource was last modified')
+    metadata_modified: datetime.datetime = Field(description='Datetime that the resource metadata was last modified')
+    position: int = Field(description='The position in the dataset of the resource')
+    size: int = Field(description='The size of the resource in bytes')
+    dataset_notes: str = Field(max_length=2048, description='Notes on the host dataset for the resource')
+    dataset_title: str = Field(max_length=512, description='Title on the host dataset for the resource')
+    dataset_name: str = Field(max_length=512, description='Name on the host dataset for the resource')
+    dataset_subnational: str = Field(max_length=32, description='Subnational flag from host dataset')
+    dataset_updated_by_script: str = Field(max_length=512, description='Updated by script from host dataset')
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -51,3 +62,4 @@ class ListTypeEnum(str, Enum):
     DATASERIES = 'dataseries'
     HAPI_RESOURCES = 'hapi_resources'
     SOLR_QUERY_FIELDS = 'solr_query_fields'
+    ORGANIZATIONS = 'organizations'
