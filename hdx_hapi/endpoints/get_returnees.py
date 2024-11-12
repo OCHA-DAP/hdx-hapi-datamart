@@ -106,3 +106,12 @@ async def get_returnees(
         asylum_in_gho=asylum_in_gho,
     )
     return transform_result_to_csv_stream_if_requested(result, output_format, ReturneesResponse)
+
+
+get_returnees.__doc__ = (
+    'This sub-category is populated using data compiled by UNHCR, which offers annual age- and '
+    'gender-disaggregated global statistics on forcibly displaced and stateless persons, '
+    'categorised by their country of origin and country of asylum. The data are sourced '
+    "primarily from governments hosting these populations, UNHCR's own registration data, "
+    'and occasionally data published by non-governmental organizations.'
+)

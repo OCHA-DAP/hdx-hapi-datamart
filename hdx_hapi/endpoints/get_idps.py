@@ -108,3 +108,12 @@ async def get_idps(
         admin_level=admin_level,
     )
     return transform_result_to_csv_stream_if_requested(result, output_format, IdpsResponse)
+
+
+get_idps.__doc__ = (
+    "The data for this sub-category is taken from the International Organization for Migration (IOM)'"
+    's displacement tracking matrix (DTM), which collects and analyzes data on population movements, displacements, '
+    'and mobility patterns to provide timely information for humanitarian response efforts. The DTM data used in HAPI'
+    ' is taken from their publicly accessible API, however we note that there are many country-specific DTM datasets'
+    'available on HDX, which contain more detail and disaggregation.'
+)
