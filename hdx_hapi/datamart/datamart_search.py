@@ -1,3 +1,5 @@
+import json
+
 import time
 import httpx
 
@@ -34,6 +36,7 @@ async def datamart_search(
             url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
             response_items = await call_ckan_api(params, url)
             resource = decorate_with_dataset_metadata(response_items['result']['results'][0], resource)
+            resource = decorate_with_fs_check_info(response_items['result'], resource)
             results.append(resource)
     elif filter_query is not None or main_query is not None:
         params = {}
@@ -50,6 +53,7 @@ async def datamart_search(
                 for original_resource in dataset['resources']:
                     resource = select_resource_fields(original_resource)
                     resource = decorate_with_dataset_metadata(dataset, resource)
+                    resource = decorate_with_fs_check_info(original_resource, resource)
 
                     results.append(resource)
     elif lucky_dip:
@@ -71,6 +75,7 @@ async def datamart_search(
             selected_resource = dataset['resources'][randrange(0, len(dataset['resources']))]
             resource = select_resource_fields(selected_resource)
             resource = decorate_with_dataset_metadata(dataset, resource)
+            resource = decorate_with_fs_check_info(selected_resource, resource)
 
             results.append(resource)
 
@@ -115,3 +120,39 @@ def decorate_with_dataset_metadata(dataset_metadata: dict, resource: dict) -> di
     resource['dataset_subnational'] = dataset_metadata.get('subnational', '')
     resource['dataset_updated_by_script'] = dataset_metadata.get('updated_by_script', '')
     return resource
+
+
+def decorate_with_fs_check_info(original_resource: dict, selected_resource: dict) -> dict:
+    print(f"\n{original_resource['url']}, {original_resource['format']}", flush=True)
+    selected_resource['n_sheets'] = 1
+    selected_resource['sheets'] = []
+    if 'fs_check_info' in original_resource.keys():
+        fs_check_info_dict = json.loads(original_resource['fs_check_info'])
+        print(f'Number of fs_check_info_entries {len(fs_check_info_dict)}', flush=True)
+        if len(fs_check_info_dict) > 2:
+            for i, entry in enumerate(fs_check_info_dict):
+                print(i, entry['message'], entry['timestamp'], flush=True)
+            # print(json.dumps(fs_check_info_dict, indent=4), flush=True)
+        for entry in fs_check_info_dict:
+            if 'hxl_proxy_response' in entry.keys():
+                if len(entry['sheet_changes']) != 0:
+                    print(entry['sheet_changes'], flush=True)
+                    # print(entry['hxl_proxy_response'].keys(), flush=True)
+                    # print(entry['hxl_proxy_response']['format'], flush=True)  #
+                # print(json.dumps(entry['hxl_proxy_response']['sheets'], indent=4), flush=True)
+                # print(entry['hxl_proxy_response']['sheets'][0].keys(), flush=True)
+                selected_resource['n_sheets'] = len(entry['hxl_proxy_response']['sheets'])
+                for sheet in entry['hxl_proxy_response']['sheets']:
+                    sheet_record = {}
+                    sheet_record['sheet_name'] = sheet['name']
+                    sheet_record['ncols'] = sheet['ncols']
+                    sheet_record['nrows'] = sheet['nrows']
+                    sheet_record['headers'] = sheet['headers']
+                    sheet_record['hxl_headers'] = sheet['hxl_headers']
+                    selected_resource['sheets'].append(sheet_record)
+
+    else:
+        # Put null values in
+        pass
+
+    return selected_resource
