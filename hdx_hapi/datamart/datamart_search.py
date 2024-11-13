@@ -165,5 +165,12 @@ def decorate_with_fs_check_info(original_resource: dict, selected_resource: dict
 
     else:
         log.info('No fs_check_info key found')
+        sheet_record = {}
+        sheet_record['sheet_name'] = None
+        sheet_record['ncols'] = None
+        sheet_record['nrows'] = None
+        sheet_record['headers'] = []
+        sheet_record['hxl_headers'] = []
+        selected_resource['sheets'].append(sheet_record)
 
     return selected_resource
