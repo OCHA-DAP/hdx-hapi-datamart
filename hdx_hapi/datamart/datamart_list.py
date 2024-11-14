@@ -1,6 +1,7 @@
 import csv
 import os
 
+from typing import Optional
 from httpx import Client
 from hdx_hapi.datamart.datamart_responses import ListTypeEnum
 from hdx_hapi.endpoints.util.util import PaginationParams
@@ -19,7 +20,7 @@ Sources for the list data:
 """  # noqa
 
 
-async def datamart_list(pagination_parameters: PaginationParams, list_type: ListTypeEnum):
+async def datamart_list(pagination_parameters: PaginationParams, list_type: Optional[ListTypeEnum]):
     results = []
     if list_type == ListTypeEnum.ISO3_COUNTRY_CODES:
         with open(
