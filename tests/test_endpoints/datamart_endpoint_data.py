@@ -14,7 +14,7 @@ datamart_endpoint_data = {
         'query_parameters': {
             'resource_hdx_id': '96b24403-0de4-4652-bb76-f585c04b5e6d',
             'lucky_dip': True,
-            'main_query': 'dataset_source:clima*',
+            'main_query': 'clima*',
             'filter_query': 'res_format:(CSV and XLS)',
         },
         'expected_fields': [

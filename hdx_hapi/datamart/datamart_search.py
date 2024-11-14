@@ -100,10 +100,13 @@ async def call_ckan_api(params: dict, url: str) -> dict:
     try:
         async with AsyncClient() as ac:
             response = await ac.get(url, params=params, timeout=60)
-        response.raise_for_status()
+        # response.raise_for_status()
     except httpx.ConnectTimeout:
         print(f'**Timeout in {time.time() - t0:0.2f} seconds')
         response = None
+    except Exception as exc:
+        log.info(f'{exc}')
+        raise exc
 
     response_items = response.json()
     return response_items
