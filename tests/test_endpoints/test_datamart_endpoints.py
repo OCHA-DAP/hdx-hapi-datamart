@@ -28,7 +28,7 @@ async def test_get_with_query_params(event_loop, endpoint):
         async with AsyncClient(app=app, base_url='http://test', params={param_name: param_value}) as ac:
             response = await ac.get(endpoint)
 
-        assert response.status_code == 200
+        assert response.status_code == 200, f'Failed for {param_name}={param_value}'
 
         assert len(response.json()['data']) > 0, (
             f'There should be at least one entry for parameter "{param_name}" with value "{param_value}" '
