@@ -33,19 +33,8 @@ async def datamart_search(
     results = []
     log.info(f'{locals()}')
     if resource_id is not None:
-        log.info('Resource_id query')
-        params = {'id': resource_id}
-        url = f'{CONFIG.HDX_DOMAIN}{RESOURCE_SHOW_ENDPOINT}'
-        response_items = await call_ckan_api(params, url)
-
-        if 'result' in response_items:
-            resource = select_resource_fields(response_items['result'])
-            params = {'fq': f'id:{resource["dataset_hdx_id"]}'}
-            url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
-            response_items = await call_ckan_api(params, url)
-            resource = decorate_with_dataset_metadata(response_items['result']['results'][0], resource)
-            resource = decorate_with_fs_check_info(response_items['result'], resource)
-            results.append(resource)
+        resource = await search_by_resource_id(resource_id)
+        results.append(resource)
     elif filter_query is not None or main_query is not None:
         log.info(f'query with filter_query={filter_query}, main_query={main_query}')
         params = {}
@@ -177,3 +166,20 @@ def decorate_with_fs_check_info(original_resource: dict, selected_resource: dict
         selected_resource['sheets'].append(sheet_record)
 
     return selected_resource
+
+
+async def search_by_resource_id(resource_id: str) -> dict:
+    log.info('Resource_id query')
+    params = {'id': resource_id}
+    url = f'{CONFIG.HDX_DOMAIN}{RESOURCE_SHOW_ENDPOINT}'
+    response_items = await call_ckan_api(params, url)
+    resource = {}
+    if 'result' in response_items:
+        resource = select_resource_fields(response_items['result'])
+        params = {'fq': f'id:{resource["dataset_hdx_id"]}'}
+        url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
+        response_items = await call_ckan_api(params, url)
+        resource = decorate_with_dataset_metadata(response_items['result']['results'][0], resource)
+        resource = decorate_with_fs_check_info(response_items['result'], resource)
+
+    return resource

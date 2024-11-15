@@ -66,3 +66,9 @@ class ListTypeEnum(str, Enum):
     HAPI_RESOURCES = 'hapi_resources'
     SOLR_QUERY_FIELDS = 'solr_query_fields'
     ORGANIZATIONS = 'organizations'
+
+
+class BackendEnum(str, Enum):
+    PANDAS = 'pandas'
+    HXL_PROXY = 'hxl_proxy'
+    DATASTORE = 'datastore'
