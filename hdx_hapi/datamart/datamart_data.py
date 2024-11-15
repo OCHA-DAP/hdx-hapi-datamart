@@ -6,6 +6,7 @@ import pandas
 from typing import Optional
 from fastapi import HTTPException
 from hdx_hapi.datamart.datamart_responses import BackendEnum
+from hdx_hapi.datamart.datamart_search import search_by_resource_id, search_by_query
 from hdx_hapi.endpoints.util.util import PaginationParams
 
 from hdx_hapi.config.config import get_config
@@ -27,15 +28,37 @@ async def datamart_data(
     dataset_hdx_stub: Optional[str],
     resource_hdx_stub: Optional[str],
     sheet_name: Optional[str],
-    filter: Optional[str],
+    data_filter: Optional[str],
     backend: Optional[BackendEnum],
 ):
     results = []
 
-    # get a download URL somehow
-    assert download_url is not None
+    # get a download URL if it is not provided
+    if download_url is None:
+        if resource_hdx_id:
+            result = await search_by_resource_id(resource_id=resource_hdx_id)
+            if 'download_url' in result:
+                download_url = result['download_url']
+        if dataset_hdx_stub and resource_hdx_stub:
+            results = await search_by_query(f'name:{dataset_hdx_stub}', None)
+            for result in results:
+                if result['resource_name'] == resource_hdx_stub:
+                    download_url = result['download_url']
+    if download_url is None:
+        log.info(
+            f'Resource not found for dataset_hdx_stub= {dataset_hdx_stub}, '
+            f'resource_hdx_stub= {resource_hdx_stub}, resource_hdx_id={resource_hdx_id}'
+        )
+        raise HTTPException(
+            status_code=204,
+            detail=(
+                f'Resource not found for dataset_hdx_stub= {dataset_hdx_stub}, '
+                f'resource_hdx_stub= {resource_hdx_stub}, resource_hdx_id={resource_hdx_id}'
+            ),
+        )
+
     if backend == BackendEnum.PANDAS:
-        results = pandas_backend(download_url, pagination_parameters, sheet_name)
+        results = pandas_backend(download_url, pagination_parameters, sheet_name=sheet_name)
     elif backend == BackendEnum.HXL_PROXY:
         raise NotImplementedError
     elif backend == BackendEnum.DATASTORE:

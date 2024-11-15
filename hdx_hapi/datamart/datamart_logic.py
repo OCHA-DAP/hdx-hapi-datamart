@@ -35,7 +35,7 @@ async def get_datamart_data_srv(
     dataset_hdx_stub: Optional[str],
     resource_hdx_stub: Optional[str],
     sheet_name: Optional[str],
-    filter: Optional[str],
+    data_filter: Optional[str],
     backend: Optional[BackendEnum],
 ):
     results = await datamart_data(

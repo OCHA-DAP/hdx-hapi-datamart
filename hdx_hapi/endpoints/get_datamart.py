@@ -115,7 +115,7 @@ async def get_datamart_data(
     sheet_name: Annotated[
         Optional[str], Query(max_length=36, description=f'The name or index of the required sheet in a spreadsheet')
     ] = None,
-    filter: Annotated[
+    data_filter: Annotated[
         Optional[str], Query(max_length=512, description=f'A filter definition like fieldname:value')
     ] = None,
     backend: Annotated[
@@ -133,7 +133,7 @@ async def get_datamart_data(
         dataset_hdx_stub=dataset_hdx_stub,
         resource_hdx_stub=resource_hdx_stub,
         sheet_name=sheet_name,
-        filter=filter,
+        data_filter=data_filter,
         backend=backend,
     )
     return transform_result_to_csv_stream_if_requested(result, output_format, DatamartDataResponse)

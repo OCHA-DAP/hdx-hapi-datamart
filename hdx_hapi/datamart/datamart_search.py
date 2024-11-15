@@ -36,24 +36,7 @@ async def datamart_search(
         resource = await search_by_resource_id(resource_id)
         results.append(resource)
     elif filter_query is not None or main_query is not None:
-        log.info(f'query with filter_query={filter_query}, main_query={main_query}')
-        params = {}
-        if filter_query is not None:
-            params['fq'] = filter_query
-        if main_query is not None:
-            params['q'] = main_query
-
-        url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
-        response_items = await call_ckan_api(params, url)
-        # Extract resources from response:
-        if 'result' in response_items:
-            for dataset in response_items['result']['results']:
-                for original_resource in dataset['resources']:
-                    resource = select_resource_fields(original_resource)
-                    resource = decorate_with_dataset_metadata(dataset, resource)
-                    resource = decorate_with_fs_check_info(original_resource, resource)
-
-                    results.append(resource)
+        results = await search_by_query(filter_query, main_query)
     elif lucky_dip:
         log.info('Lucky dip query')
         # Call package search to get a number of datasets (we could hard code this) - filter to
@@ -80,6 +63,29 @@ async def datamart_search(
     else:
         log.info('No valid query parameters provided')
 
+    return results
+
+
+async def search_by_query(filter_query: Optional[str], main_query: Optional[str]) -> list[dict]:
+    log.info(f'query with filter_query={filter_query}, main_query={main_query}')
+    results = []
+    params = {}
+    if filter_query is not None:
+        params['fq'] = filter_query
+    if main_query is not None:
+        params['q'] = main_query
+
+    url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
+    response_items = await call_ckan_api(params, url)
+    # Extract resources from response:
+    if 'result' in response_items:
+        for dataset in response_items['result']['results']:
+            for original_resource in dataset['resources']:
+                resource = select_resource_fields(original_resource)
+                resource = decorate_with_dataset_metadata(dataset, resource)
+                resource = decorate_with_fs_check_info(original_resource, resource)
+
+                results.append(resource)
     return results
 
 
