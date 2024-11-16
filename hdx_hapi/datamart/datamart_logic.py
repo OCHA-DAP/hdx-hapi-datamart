@@ -34,6 +34,7 @@ async def get_datamart_data_srv(
     resource_hdx_id: Optional[str],
     dataset_hdx_stub: Optional[str],
     resource_hdx_stub: Optional[str],
+    lucky_dip: Optional[bool],
     sheet_name: Optional[str],
     data_filter: Optional[str],
     backend: Optional[BackendEnum],
@@ -44,8 +45,9 @@ async def get_datamart_data_srv(
         resource_hdx_id,
         dataset_hdx_stub,
         resource_hdx_stub,
+        lucky_dip,
         sheet_name,
-        filter,
+        data_filter,
         backend,
     )
     return results

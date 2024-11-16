@@ -112,6 +112,7 @@ async def get_datamart_data(
         Optional[str], Query(max_length=128, description=f'{DOC_HDX_DATASET_IN_RESOURCE_NAME} {DOC_SEE_DATASET}')
     ] = None,
     resource_hdx_stub: Annotated[Optional[str], Query(max_length=128, description=f'{DOC_HDX_RESOURCE_STUB}')] = None,
+    lucky_dip: Annotated[Optional[bool], Query(description='Return a random data file from HDX')] = None,
     sheet_name: Annotated[
         Optional[str], Query(max_length=36, description=f'The name or index of the required sheet in a spreadsheet')
     ] = None,
@@ -132,6 +133,7 @@ async def get_datamart_data(
         resource_hdx_id=resource_hdx_id,
         dataset_hdx_stub=dataset_hdx_stub,
         resource_hdx_stub=resource_hdx_stub,
+        lucky_dip=lucky_dip,
         sheet_name=sheet_name,
         data_filter=data_filter,
         backend=backend,

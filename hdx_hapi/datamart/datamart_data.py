@@ -6,7 +6,7 @@ import pandas
 from typing import Optional
 from fastapi import HTTPException
 from hdx_hapi.datamart.datamart_responses import BackendEnum
-from hdx_hapi.datamart.datamart_search import search_by_resource_id, search_by_query
+from hdx_hapi.datamart.datamart_search import search_by_resource_id, search_by_query, search_by_lucky_dip
 from hdx_hapi.endpoints.util.util import PaginationParams
 
 from hdx_hapi.config.config import get_config
@@ -27,6 +27,7 @@ async def datamart_data(
     resource_hdx_id: Optional[str],
     dataset_hdx_stub: Optional[str],
     resource_hdx_stub: Optional[str],
+    lucky_dip: Optional[str],
     sheet_name: Optional[str],
     data_filter: Optional[str],
     backend: Optional[BackendEnum],
@@ -35,6 +36,10 @@ async def datamart_data(
 
     # get a download URL if it is not provided
     if download_url is None:
+        if lucky_dip:
+            result = await search_by_lucky_dip()
+            if 'download_url' in result:
+                download_url = result['download_url']
         if resource_hdx_id:
             result = await search_by_resource_id(resource_id=resource_hdx_id)
             if 'download_url' in result:

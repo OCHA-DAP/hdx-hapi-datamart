@@ -31,35 +31,15 @@ async def datamart_search(
     lucky_dip: Optional[bool] = None,
 ):
     results = []
-    log.info(f'{locals()}')
+    log.info(f'Query parameters: {locals()}')
     if resource_id is not None:
         resource = await search_by_resource_id(resource_id)
         results.append(resource)
     elif filter_query is not None or main_query is not None:
         results = await search_by_query(filter_query, main_query)
     elif lucky_dip:
-        log.info('Lucky dip query')
-        # Call package search to get a number of datasets (we could hard code this) - filter to
-        url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
-        params = {'fq': 'res_format:(CSV and XLS)'}
-        response_items = await call_ckan_api(params, url)
-        n_datasets = response_items['result']['count']
-
-        # Make a random offset in the range 0, n datasets
-        random_start = randrange(0, n_datasets)
-        # query with offset (start) = random, limit (rows) = 1
-        params['start'] = random_start
-        params['rows'] = 1
-        random_item = await call_ckan_api(params, url)
-        # Pick first resource?
-        if 'result' in random_item:
-            dataset = random_item['result']['results'][0]
-            selected_resource = dataset['resources'][randrange(0, len(dataset['resources']))]
-            resource = select_resource_fields(selected_resource)
-            resource = decorate_with_dataset_metadata(dataset, resource)
-            resource = decorate_with_fs_check_info(selected_resource, resource)
-
-            results.append(resource)
+        resource = await search_by_lucky_dip()
+        results.append(resource)
     else:
         log.info('No valid query parameters provided')
 
@@ -187,5 +167,31 @@ async def search_by_resource_id(resource_id: str) -> dict:
         response_items = await call_ckan_api(params, url)
         resource = decorate_with_dataset_metadata(response_items['result']['results'][0], resource)
         resource = decorate_with_fs_check_info(response_items['result'], resource)
+
+    return resource
+
+
+async def search_by_lucky_dip() -> dict:
+    log.info('Lucky dip query')
+    # Call package search to get a number of datasets (we could hard code this) - filter to
+    url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
+    params = {'fq': 'res_format:(CSV and XLS)'}
+    response_items = await call_ckan_api(params, url)
+    n_datasets = response_items['result']['count']
+
+    # Make a random offset in the range 0, n datasets
+    random_start = randrange(0, n_datasets)
+    # query with offset (start) = random, limit (rows) = 1
+    params['start'] = random_start
+    params['rows'] = 1
+    random_item = await call_ckan_api(params, url)
+    # Pick first resource?
+    resource = {}
+    if 'result' in random_item:
+        dataset = random_item['result']['results'][0]
+        selected_resource = dataset['resources'][randrange(0, len(dataset['resources']))]
+        resource = select_resource_fields(selected_resource)
+        resource = decorate_with_dataset_metadata(dataset, resource)
+        resource = decorate_with_fs_check_info(selected_resource, resource)
 
     return resource
