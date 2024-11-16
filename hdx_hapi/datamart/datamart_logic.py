@@ -39,7 +39,7 @@ async def get_datamart_data_srv(
     data_filter: Optional[str],
     backend: Optional[BackendEnum],
 ):
-    results = await datamart_data(
+    result = await datamart_data(
         pagination_parameters,
         download_url,
         resource_hdx_id,
@@ -50,4 +50,4 @@ async def get_datamart_data_srv(
         data_filter,
         backend,
     )
-    return results
+    return result

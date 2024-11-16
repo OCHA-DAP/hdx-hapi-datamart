@@ -33,22 +33,39 @@ async def datamart_data(
     backend: Optional[BackendEnum],
 ):
     results = []
-
+    resource_metadata = {}
     # get a download URL if it is not provided
     if download_url is None:
         if lucky_dip:
-            result = await search_by_lucky_dip()
-            if 'download_url' in result:
-                download_url = result['download_url']
+            resource_metadata = await search_by_lucky_dip()
+            if 'download_url' in resource_metadata:
+                download_url = resource_metadata['download_url']
         if resource_hdx_id:
-            result = await search_by_resource_id(resource_id=resource_hdx_id)
-            if 'download_url' in result:
-                download_url = result['download_url']
+            resource_metadata = await search_by_resource_id(resource_id=resource_hdx_id)
+            if 'download_url' in resource_metadata:
+                download_url = resource_metadata['download_url']
         if dataset_hdx_stub and resource_hdx_stub:
             results = await search_by_query(f'name:{dataset_hdx_stub}', None)
-            for result in results:
-                if result['resource_name'] == resource_hdx_stub:
-                    download_url = result['download_url']
+            for resource_metadata in results:
+                if resource_metadata['resource_name'] == resource_hdx_stub:
+                    download_url = resource_metadata['download_url']
+                    break
+    # This gets resource metadata for the download_url
+    else:
+        log.info(f'{download_url}')
+        try:
+            parts = download_url.split('/resource/')
+            resource_id = parts[1].split('/download/')[0]
+            resource_metadata = await search_by_resource_id(resource_id=resource_id)
+            log.info(f'{resource_id}')
+        except IndexError:
+            log.info(f'{download_url} is not an HDX format download_url')
+            raise HTTPException(
+                status_code=204,
+                detail=(f'{download_url} is not an HDX format download_url, no data returned'),
+            )
+
+    log.info(resource_metadata)
     if download_url is None:
         log.info(
             f'Resource not found for dataset_hdx_stub= {dataset_hdx_stub}, '
@@ -69,7 +86,10 @@ async def datamart_data(
     elif backend == BackendEnum.DATASTORE:
         raise NotImplementedError
 
-    return results
+    # Attach the resource_metadata to the results here
+    result = {'resource_metadata': resource_metadata, 'data': results}
+
+    return result
 
 
 def pandas_backend(download_url: str, pagination_parameters: PaginationParams, sheet_name: Optional[str]):

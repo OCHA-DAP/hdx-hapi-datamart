@@ -138,4 +138,15 @@ async def get_datamart_data(
         data_filter=data_filter,
         backend=backend,
     )
-    return transform_result_to_csv_stream_if_requested(result, output_format, DatamartDataResponse)
+
+    formatted_data = transform_result_to_csv_stream_if_requested(result['data'], output_format, DatamartDataResponse)
+
+    response = None
+    if isinstance(formatted_data, dict):
+        response = {}
+        response['data'] = formatted_data['data']
+        response['resource_metadata'] = result['resource_metadata']
+    else:
+        response = formatted_data
+
+    return response
