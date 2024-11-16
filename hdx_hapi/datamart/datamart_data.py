@@ -1,6 +1,7 @@
 import logging
 import logging.config
 import os
+import resource
 import pandas
 
 from typing import Optional
@@ -27,7 +28,7 @@ async def datamart_data(
     resource_hdx_id: Optional[str],
     dataset_hdx_stub: Optional[str],
     resource_hdx_stub: Optional[str],
-    lucky_dip: Optional[str],
+    lucky_dip: Optional[bool],
     sheet_name: Optional[str],
     data_filter: Optional[str],
     backend: Optional[BackendEnum],
@@ -80,7 +81,7 @@ async def datamart_data(
         )
 
     if backend == BackendEnum.PANDAS:
-        results = pandas_backend(download_url, pagination_parameters, sheet_name=sheet_name)
+        results = pandas_backend(resource_metadata, pagination_parameters, sheet_name=sheet_name)
     elif backend == BackendEnum.HXL_PROXY:
         raise NotImplementedError
     elif backend == BackendEnum.DATASTORE:
@@ -92,23 +93,37 @@ async def datamart_data(
     return result
 
 
-def pandas_backend(download_url: str, pagination_parameters: PaginationParams, sheet_name: Optional[str]):
+def pandas_backend(resource_metadata: dict, pagination_parameters: PaginationParams, sheet_name: Optional[str]):
+    download_url = resource_metadata['download_url']
+    file_format = resource_metadata['format']
+    is_hxlated = False
+    if not sheet_name:
+        is_hxlated = resource_metadata['sheets'][0]['is_hxlated']
+    else:
+        for sheet in resource_metadata['sheets']:
+            if sheet_name == sheet['sheet_name']:
+                is_hxlated = sheet['is_hxlated']
     try:
-        if download_url.lower().endswith('.xls') or download_url.lower().endswith('.xlsx'):
+        if file_format == 'XLS':
             if sheet_name is None:
                 dataframe = pandas.read_excel(download_url)
             else:
                 dataframe = pandas.read_excel(download_url, sheet_name=sheet_name)
-        else:
+        elif file_format == 'CSV':
             dataframe = pandas.read_csv(download_url)
+        else:
+            raise HTTPException(status_code=501, detail=f'Data in file format {file_format} not supported')
         dataframe = dataframe.astype(str)
         results = dataframe.to_dict('records')
+
     except FileNotFoundError:
         raise HTTPException(status_code=204, detail=f'Resource not found for URL {download_url}')
     except pandas.errors.ParserError:
         raise HTTPException(status_code=422, detail=f'Resource could not be parsed for URL {download_url}')
 
     # Pop HXL row if it exists - not yet implemented - you can set offset=1 if you know it's HXL-ated
+    if is_hxlated:
+        results = results[1:]
     try:
         results = results[pagination_parameters.offset : (pagination_parameters.offset + pagination_parameters.limit)]
     except IndexError:

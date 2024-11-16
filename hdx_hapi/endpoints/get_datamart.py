@@ -114,10 +114,10 @@ async def get_datamart_data(
     resource_hdx_stub: Annotated[Optional[str], Query(max_length=128, description=f'{DOC_HDX_RESOURCE_STUB}')] = None,
     lucky_dip: Annotated[Optional[bool], Query(description='Return a random data file from HDX')] = None,
     sheet_name: Annotated[
-        Optional[str], Query(max_length=36, description=f'The name or index of the required sheet in a spreadsheet')
+        Optional[str], Query(max_length=36, description='The name or index of the required sheet in a spreadsheet')
     ] = None,
     data_filter: Annotated[
-        Optional[str], Query(max_length=512, description=f'A filter definition like fieldname:value')
+        Optional[str], Query(max_length=512, description='A filter definition like fieldname:value')
     ] = None,
     backend: Annotated[
         Optional[BackendEnum], Query(max_length=32, description='The backend, for development purposes')

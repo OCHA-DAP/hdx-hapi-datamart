@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import logging.config
@@ -110,6 +111,13 @@ def decorate_with_dataset_metadata(dataset_metadata: dict, resource: dict) -> di
     resource['dataset_notes'] = dataset_metadata.get('notes', '')
     resource['dataset_subnational'] = dataset_metadata.get('subnational', '')
     resource['dataset_updated_by_script'] = dataset_metadata.get('updated_by_script', '')
+    # License information
+    license_title = dataset_metadata.get('license_title', '')
+    license_source = dataset_metadata.get('dataset_source', '')
+    license_year = datetime.datetime.now().isoformat()[0:4]
+    resource['dataset_license_and_attribution'] = (
+        f'Data by {license_source} ({license_year}). Licensed under {license_title}.'
+    )
     return resource
 
 
@@ -138,6 +146,7 @@ def decorate_with_fs_check_info(original_resource: dict, selected_resource: dict
                     sheet_record['nrows'] = sheet['nrows']
                     sheet_record['headers'] = sheet['headers']
                     sheet_record['hxl_headers'] = sheet['hxl_headers']
+                    sheet_record['is_hxlated'] = sheet['is_hxlated']
                     selected_resource['sheets'].append(sheet_record)
                 break
 
@@ -149,6 +158,7 @@ def decorate_with_fs_check_info(original_resource: dict, selected_resource: dict
         sheet_record['nrows'] = None
         sheet_record['headers'] = []
         sheet_record['hxl_headers'] = []
+        sheet_record['is_hxlated'] = False
         selected_resource['sheets'].append(sheet_record)
 
     return selected_resource
