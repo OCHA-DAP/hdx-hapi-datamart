@@ -37,7 +37,6 @@ async def datamart_data(
     data_filter: Optional[str],
     backend: Optional[BackendEnum],
 ):
-    results = []
     resource_metadata = {}
     # get a download URL if it is not provided
     if download_url is None:
@@ -84,15 +83,21 @@ async def datamart_data(
             ),
         )
 
+    results_from_backend = None
     if backend == BackendEnum.PANDAS:
-        results = pandas_backend(resource_metadata, pagination_parameters, sheet_name=sheet_name)
+        results_from_backend = pandas_backend(resource_metadata, pagination_parameters, sheet_name=sheet_name)
     elif backend == BackendEnum.HXL_PROXY:
-        results = hxl_proxy_backend(resource_metadata, pagination_parameters, sheet_name=sheet_name)
+        results_from_backend = hxl_proxy_backend(resource_metadata, pagination_parameters, sheet_name=sheet_name)
     elif backend == BackendEnum.DATASTORE:
         raise NotImplementedError
 
+    assert results_from_backend is not None
     # Attach the resource_metadata to the results here
-    result = {'resource_metadata': resource_metadata, 'data': results}
+    result = {
+        'resource_metadata': resource_metadata,
+        'paging_metadata': results_from_backend['paging_metadata'],
+        'data': results_from_backend['data'],
+    }
 
     return result
 
@@ -119,7 +124,7 @@ def hxl_proxy_backend(resource_metadata: dict, pagination_parameters: Pagination
     try:
         with Client() as ac:
             response = ac.get(HXL_PROXY_DATA_PREVIEW_ENDPOINT, params=params, timeout=60)
-        # response.raise_for_status()
+        response.raise_for_status()
     except httpx.ConnectTimeout:
         log.info(f'**Timeout in {time.time() - t0:0.2f} seconds')
         raise HTTPException(
@@ -143,6 +148,8 @@ def hxl_proxy_backend(resource_metadata: dict, pagination_parameters: Pagination
     # Pop HXL row if it exists
     if is_hxlated:
         decorated_results = decorated_results[1:]
+
+    total_rows = len(decorated_results)
     try:
         decorated_results = decorated_results[
             pagination_parameters.offset : (pagination_parameters.offset + pagination_parameters.limit)
@@ -150,7 +157,27 @@ def hxl_proxy_backend(resource_metadata: dict, pagination_parameters: Pagination
     except IndexError:
         decorated_results = decorated_results
 
-    return decorated_results
+    returned_results = calculate_paging_metadata(pagination_parameters, decorated_results, total_rows)
+    return returned_results
+
+
+def calculate_paging_metadata(pagination_parameters, decorated_results, total_rows):
+    returned_rows = len(decorated_results)
+
+    if returned_rows < pagination_parameters.limit:
+        next_offset = None
+    else:
+        next_offset = pagination_parameters.offset + pagination_parameters.limit
+    paging_metadata = {
+        'total_rows': total_rows,
+        'returned_rows': returned_rows,
+        'current_offset': pagination_parameters.offset,
+        'next_offset': next_offset,
+    }
+
+    returned_results = {'data': decorated_results, 'paging_metadata': paging_metadata}
+    log.info(paging_metadata)
+    return returned_results
 
 
 def pandas_backend(resource_metadata: dict, pagination_parameters: PaginationParams, sheet_name: Optional[str]):
@@ -184,9 +211,11 @@ def pandas_backend(resource_metadata: dict, pagination_parameters: PaginationPar
     # Pop HXL row if it exists - not yet implemented - you can set offset=1 if you know it's HXL-ated
     if is_hxlated:
         results = results[1:]
+    total_rows = len(results)
     try:
         results = results[pagination_parameters.offset : (pagination_parameters.offset + pagination_parameters.limit)]
     except IndexError:
         results = results
 
-    return results
+    returned_results = calculate_paging_metadata(pagination_parameters, results, total_rows)
+    return returned_results

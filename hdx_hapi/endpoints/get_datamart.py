@@ -146,6 +146,7 @@ async def get_datamart_data(
         response = {}
         response['data'] = formatted_data['data']
         response['resource_metadata'] = result['resource_metadata']
+        response['paging_metadata'] = result['paging_metadata']
     else:
         response = formatted_data
 
