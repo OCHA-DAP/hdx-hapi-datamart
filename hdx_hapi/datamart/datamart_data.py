@@ -1,10 +1,13 @@
 import logging
 import logging.config
 import os
-import resource
+import time
+import httpx
 import pandas
 
+
 from typing import Optional
+from httpx import Client
 from fastapi import HTTPException
 from hdx_hapi.datamart.datamart_responses import BackendEnum
 from hdx_hapi.datamart.datamart_search import search_by_resource_id, search_by_query, search_by_lucky_dip
@@ -20,6 +23,7 @@ CONFIG = get_config()
 
 PACKAGE_SEARCH_ENDPOINT = '/api/action/package_search'
 RESOURCE_SHOW_ENDPOINT = '/api/action/resource_show'
+HXL_PROXY_DATA_PREVIEW_ENDPOINT = 'https://proxy.hxlstandard.org/api/data-preview.json'
 
 
 async def datamart_data(
@@ -83,7 +87,7 @@ async def datamart_data(
     if backend == BackendEnum.PANDAS:
         results = pandas_backend(resource_metadata, pagination_parameters, sheet_name=sheet_name)
     elif backend == BackendEnum.HXL_PROXY:
-        raise NotImplementedError
+        results = hxl_proxy_backend(resource_metadata, pagination_parameters, sheet_name=sheet_name)
     elif backend == BackendEnum.DATASTORE:
         raise NotImplementedError
 
@@ -91,6 +95,62 @@ async def datamart_data(
     result = {'resource_metadata': resource_metadata, 'data': results}
 
     return result
+
+
+def hxl_proxy_backend(resource_metadata: dict, pagination_parameters: PaginationParams, sheet_name: Optional[str]):
+    download_url = resource_metadata['download_url']
+    is_hxlated = False
+
+    params = {}
+    params['url'] = download_url
+    if not sheet_name:
+        is_hxlated = resource_metadata['sheets'][0]['is_hxlated']
+    else:
+        try:
+            is_hxlated = resource_metadata['sheets'][int(sheet_name)]['is_hxlated']
+            params['sheet'] = int(sheet_name)
+        except ValueError:
+            raise HTTPException(
+                status_code=400, detail=f'Requested HXL proxy backend requires an integer sheet index, not {sheet_name}'
+            )
+
+    t0 = time.time()
+    log.info(f'Calling {HXL_PROXY_DATA_PREVIEW_ENDPOINT} with {params}')
+    try:
+        with Client() as ac:
+            response = ac.get(HXL_PROXY_DATA_PREVIEW_ENDPOINT, params=params, timeout=60)
+        # response.raise_for_status()
+    except httpx.ConnectTimeout:
+        log.info(f'**Timeout in {time.time() - t0:0.2f} seconds')
+        raise HTTPException(
+            status_code=504,
+            detail=f'Request to {HXL_PROXY_DATA_PREVIEW_ENDPOINT} timed out after {time.time() - t0:0.2f} seconds',
+        )
+
+    except Exception as exc:
+        log.info(f'{exc}')
+        raise exc
+
+    results = response.json()
+
+    # results is a list of lists, we need to convert to a list of dicts
+    headers = results[0]
+    decorated_results = []
+    for result in results[1:]:
+        decorated_row = zip(headers, result)
+        decorated_results.append(decorated_row)
+
+    # Pop HXL row if it exists
+    if is_hxlated:
+        decorated_results = decorated_results[1:]
+    try:
+        decorated_results = decorated_results[
+            pagination_parameters.offset : (pagination_parameters.offset + pagination_parameters.limit)
+        ]
+    except IndexError:
+        decorated_results = decorated_results
+
+    return decorated_results
 
 
 def pandas_backend(resource_metadata: dict, pagination_parameters: PaginationParams, sheet_name: Optional[str]):
