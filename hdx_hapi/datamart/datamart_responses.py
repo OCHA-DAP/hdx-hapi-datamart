@@ -46,6 +46,9 @@ class DatamartSearchResponse(HapiBaseModel):
     dataset_name: str = Field(max_length=512, description='Name on the host dataset for the resource')
     dataset_subnational: str = Field(max_length=32, description='Subnational flag from host dataset')
     dataset_updated_by_script: str = Field(max_length=512, description='Updated by script from host dataset')
+    dataset_license_and_attribution: str = Field(
+        max_length=512, description='Summary of license and attribution information'
+    )
     n_sheets: int = Field(description='The number of sheets in a spreadsheet resource, always 1 for CSV data')
     sheet_names: list = Field(description='List of sheet names in a spreadsheet')
     sheets: list = Field(description='A list of dictionaries describing each ')

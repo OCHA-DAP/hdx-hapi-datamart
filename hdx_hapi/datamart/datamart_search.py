@@ -115,9 +115,9 @@ def decorate_with_dataset_metadata(dataset_metadata: dict, resource: dict) -> di
     license_title = dataset_metadata.get('license_title', '')
     license_source = dataset_metadata.get('dataset_source', '')
     license_year = datetime.datetime.now().isoformat()[0:4]
-    resource['dataset_license_and_attribution'] = (
-        f'Data by {license_source} ({license_year}). Licensed under {license_title}.'
-    )
+    license_str = f'Data by {license_source} ({license_year}). Licensed under {license_title}.'
+    resource['dataset_license_and_attribution'] = license_str
+
     return resource
 
 
