@@ -7,6 +7,7 @@ import os
 import time
 import httpx
 
+from fastapi import HTTPException
 from random import randrange
 from typing import Optional
 from httpx import AsyncClient
@@ -37,7 +38,7 @@ async def datamart_search(
         resource = await search_by_resource_id(resource_id)
         results.append(resource)
     elif filter_query is not None or main_query is not None:
-        results = await search_by_query(filter_query, main_query)
+        results = await search_by_query(filter_query=filter_query, main_query=main_query)
     elif lucky_dip:
         resource = await search_by_lucky_dip()
         results.append(resource)
@@ -83,6 +84,9 @@ async def call_ckan_api(params: dict, url: str) -> dict:
     except Exception as exc:
         log.info(f'{exc}')
         raise exc
+
+    if response is None:
+        raise HTTPException(status_code=404, detail=f'Empty response from querying {url} with {params}')
 
     response_items = response.json()
     return response_items
