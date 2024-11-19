@@ -85,34 +85,71 @@ async def datamart_data(
 
     results_from_backend = None
     if backend == BackendEnum.PANDAS:
-        results_from_backend = pandas_backend(resource_metadata, pagination_parameters, sheet_name=sheet_name)
+        results_from_backend = pandas_backend(resource_metadata, sheet_name=sheet_name)
     elif backend == BackendEnum.HXL_PROXY:
-        results_from_backend = hxl_proxy_backend(resource_metadata, pagination_parameters, sheet_name=sheet_name)
+        results_from_backend = hxl_proxy_backend(resource_metadata, sheet_name=sheet_name)
     elif backend == BackendEnum.DATASTORE:
         raise NotImplementedError
 
     assert results_from_backend is not None
+    # Pop hxl row, if required
+    results_from_backend = remove_hxl_row(results_from_backend, resource_metadata, sheet_name=sheet_name)
+    total_rows = len(results_from_backend)
+    # Apply data filter
+
+    # Apply pagination
+    try:
+        results_from_backend = results_from_backend[
+            pagination_parameters.offset : (pagination_parameters.offset + pagination_parameters.limit)
+        ]
+    except IndexError:
+        results_from_backend = results_from_backend
+
+    # Make paging_metadata
+    paging_metadata = calculate_paging_metadata(pagination_parameters, results_from_backend, total_rows)
+
     # Attach the resource_metadata to the results here
     result = {
         'resource_metadata': resource_metadata,
-        'paging_metadata': results_from_backend['paging_metadata'],
-        'data': results_from_backend['data'],
+        'paging_metadata': paging_metadata,
+        'data': results_from_backend,
     }
 
     return result
 
 
-def hxl_proxy_backend(resource_metadata: dict, pagination_parameters: PaginationParams, sheet_name: Optional[str]):
+def pandas_backend(resource_metadata: dict, sheet_name: Optional[str]) -> list[dict]:
     download_url = resource_metadata['download_url']
-    is_hxlated = False
+    file_format = resource_metadata['format']
+    results = []
+    try:
+        if file_format == 'XLS':
+            if sheet_name is None:
+                dataframe = pandas.read_excel(download_url)
+            else:
+                dataframe = pandas.read_excel(download_url, sheet_name=sheet_name)
+        elif file_format == 'CSV':
+            dataframe = pandas.read_csv(download_url)
+        else:
+            raise HTTPException(status_code=501, detail=f'Data in file format {file_format} not supported')
+        dataframe = dataframe.astype(str)
+        results = dataframe.to_dict('records')
+
+    except FileNotFoundError:
+        raise HTTPException(status_code=204, detail=f'Resource not found for URL {download_url}')
+    except pandas.errors.ParserError:
+        raise HTTPException(status_code=422, detail=f'Resource could not be parsed for URL {download_url}')
+
+    return results
+
+
+def hxl_proxy_backend(resource_metadata: dict, sheet_name: Optional[str]) -> list[dict]:
+    download_url = resource_metadata['download_url']
 
     params = {}
     params['url'] = download_url
-    if not sheet_name:
-        is_hxlated = resource_metadata['sheets'][0]['is_hxlated']
-    else:
+    if sheet_name:
         try:
-            is_hxlated = resource_metadata['sheets'][int(sheet_name)]['is_hxlated']
             params['sheet'] = int(sheet_name)
         except ValueError:
             raise HTTPException(
@@ -145,20 +182,31 @@ def hxl_proxy_backend(resource_metadata: dict, pagination_parameters: Pagination
         decorated_row = zip(headers, result)
         decorated_results.append(decorated_row)
 
+    total_rows = len(decorated_results)
+
+    return decorated_results, total_rows
+
+
+def remove_hxl_row(
+    decorated_results: list[dict], resource_metadata: dict, sheet_name: Optional[str] = None
+) -> list[dict]:
+    # We could detect HXL rows here
+    is_hxlated = False
+    if not sheet_name:
+        is_hxlated = resource_metadata['sheets'][0]['is_hxlated']
+    else:
+        try:
+            is_hxlated = resource_metadata['sheets'][int(sheet_name)]['is_hxlated']
+        except ValueError:
+            for sheet in resource_metadata['sheets']:
+                if sheet_name == sheet['sheet_name']:
+                    is_hxlated = sheet['is_hxlated']
+                    break
+
     # Pop HXL row if it exists
     if is_hxlated:
         decorated_results = decorated_results[1:]
-
-    total_rows = len(decorated_results)
-    try:
-        decorated_results = decorated_results[
-            pagination_parameters.offset : (pagination_parameters.offset + pagination_parameters.limit)
-        ]
-    except IndexError:
-        decorated_results = decorated_results
-
-    returned_results = calculate_paging_metadata(pagination_parameters, decorated_results, total_rows)
-    return returned_results
+    return decorated_results
 
 
 def calculate_paging_metadata(pagination_parameters, decorated_results, total_rows):
@@ -174,48 +222,5 @@ def calculate_paging_metadata(pagination_parameters, decorated_results, total_ro
         'current_offset': pagination_parameters.offset,
         'next_offset': next_offset,
     }
-
-    returned_results = {'data': decorated_results, 'paging_metadata': paging_metadata}
     log.info(paging_metadata)
-    return returned_results
-
-
-def pandas_backend(resource_metadata: dict, pagination_parameters: PaginationParams, sheet_name: Optional[str]):
-    download_url = resource_metadata['download_url']
-    file_format = resource_metadata['format']
-    is_hxlated = False
-    if not sheet_name:
-        is_hxlated = resource_metadata['sheets'][0]['is_hxlated']
-    else:
-        for sheet in resource_metadata['sheets']:
-            if sheet_name == sheet['sheet_name']:
-                is_hxlated = sheet['is_hxlated']
-    try:
-        if file_format == 'XLS':
-            if sheet_name is None:
-                dataframe = pandas.read_excel(download_url)
-            else:
-                dataframe = pandas.read_excel(download_url, sheet_name=sheet_name)
-        elif file_format == 'CSV':
-            dataframe = pandas.read_csv(download_url)
-        else:
-            raise HTTPException(status_code=501, detail=f'Data in file format {file_format} not supported')
-        dataframe = dataframe.astype(str)
-        results = dataframe.to_dict('records')
-
-    except FileNotFoundError:
-        raise HTTPException(status_code=204, detail=f'Resource not found for URL {download_url}')
-    except pandas.errors.ParserError:
-        raise HTTPException(status_code=422, detail=f'Resource could not be parsed for URL {download_url}')
-
-    # Pop HXL row if it exists - not yet implemented - you can set offset=1 if you know it's HXL-ated
-    if is_hxlated:
-        results = results[1:]
-    total_rows = len(results)
-    try:
-        results = results[pagination_parameters.offset : (pagination_parameters.offset + pagination_parameters.limit)]
-    except IndexError:
-        results = results
-
-    returned_results = calculate_paging_metadata(pagination_parameters, results, total_rows)
-    return returned_results
+    return paging_metadata
