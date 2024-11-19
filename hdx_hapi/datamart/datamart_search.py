@@ -1,3 +1,8 @@
+import json
+import logging
+import logging.config
+import os
+
 import time
 import httpx
 
@@ -8,6 +13,10 @@ from hdx_hapi.endpoints.util.util import PaginationParams
 
 from hdx_hapi.config.config import get_config
 
+logging.config.fileConfig(os.getenv('LOGGING_CONF_FILE', 'logging.conf'))
+
+log = logging.getLogger(__name__)
+
 CONFIG = get_config()
 
 PACKAGE_SEARCH_ENDPOINT = '/api/action/package_search'
@@ -16,14 +25,15 @@ RESOURCE_SHOW_ENDPOINT = '/api/action/resource_show'
 
 async def datamart_search(
     pagination_params: PaginationParams,
-    filter_query: Optional[str],
-    main_query: Optional[str],
+    filter_query: Optional[str] = None,
+    main_query: Optional[str] = None,
     resource_id: Optional[str] = None,
     lucky_dip: Optional[bool] = None,
 ):
     results = []
-
+    log.info(f'{locals()}')
     if resource_id is not None:
+        log.info('Resource_id query')
         params = {'id': resource_id}
         url = f'{CONFIG.HDX_DOMAIN}{RESOURCE_SHOW_ENDPOINT}'
         response_items = await call_ckan_api(params, url)
@@ -34,8 +44,10 @@ async def datamart_search(
             url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
             response_items = await call_ckan_api(params, url)
             resource = decorate_with_dataset_metadata(response_items['result']['results'][0], resource)
+            resource = decorate_with_fs_check_info(response_items['result'], resource)
             results.append(resource)
     elif filter_query is not None or main_query is not None:
+        log.info(f'query with filter_query={filter_query}, main_query={main_query}')
         params = {}
         if filter_query is not None:
             params['fq'] = filter_query
@@ -50,9 +62,11 @@ async def datamart_search(
                 for original_resource in dataset['resources']:
                     resource = select_resource_fields(original_resource)
                     resource = decorate_with_dataset_metadata(dataset, resource)
+                    resource = decorate_with_fs_check_info(original_resource, resource)
 
                     results.append(resource)
     elif lucky_dip:
+        log.info('Lucky dip query')
         # Call package search to get a number of datasets (we could hard code this) - filter to
         url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
         params = {'fq': 'res_format:(CSV and XLS)'}
@@ -71,21 +85,28 @@ async def datamart_search(
             selected_resource = dataset['resources'][randrange(0, len(dataset['resources']))]
             resource = select_resource_fields(selected_resource)
             resource = decorate_with_dataset_metadata(dataset, resource)
+            resource = decorate_with_fs_check_info(selected_resource, resource)
 
             results.append(resource)
+    else:
+        log.info('No valid query parameters provided')
 
     return results
 
 
 async def call_ckan_api(params: dict, url: str) -> dict:
     t0 = time.time()
+    log.info(f'Calling {url} with {params}')
     try:
         async with AsyncClient() as ac:
             response = await ac.get(url, params=params, timeout=60)
-        response.raise_for_status()
+        # response.raise_for_status()
     except httpx.ConnectTimeout:
         print(f'**Timeout in {time.time() - t0:0.2f} seconds')
         response = None
+    except Exception as exc:
+        log.info(f'{exc}')
+        raise exc
 
     response_items = response.json()
     return response_items
@@ -115,3 +136,44 @@ def decorate_with_dataset_metadata(dataset_metadata: dict, resource: dict) -> di
     resource['dataset_subnational'] = dataset_metadata.get('subnational', '')
     resource['dataset_updated_by_script'] = dataset_metadata.get('updated_by_script', '')
     return resource
+
+
+def decorate_with_fs_check_info(original_resource: dict, selected_resource: dict) -> dict:
+    log.info(f"\n{original_resource.get('url', 'No URL')}, {original_resource.get('format', 'No format')}")
+    selected_resource['n_sheets'] = 1
+    selected_resource['sheet_names'] = []
+    selected_resource['sheets'] = []
+    if 'fs_check_info' in original_resource.keys():
+        fs_check_info_dict = json.loads(original_resource['fs_check_info'])
+        log.info(f'Number of fs_check_info_entries {len(fs_check_info_dict)}')
+        fs_check_info_dict.reverse()  # This makes sure we get the most recent file structure check
+        for entry in fs_check_info_dict:
+            if 'File structure check completed' in entry['message']:
+                if len(entry['sheet_changes']) != 0:
+                    print(entry['sheet_changes'], flush=True)
+                selected_resource['n_sheets'] = len(entry['hxl_proxy_response']['sheets'])
+                number_of_sheets = len(entry['hxl_proxy_response']['sheets'])
+                log.info(f'{number_of_sheets} sheets found in resource')
+                for sheet in entry['hxl_proxy_response']['sheets']:
+                    log.info(sheet['name'])
+                    sheet_record = {}
+                    selected_resource['sheet_names'].append(sheet['name'])
+                    sheet_record['sheet_name'] = sheet['name']
+                    sheet_record['ncols'] = sheet['ncols']
+                    sheet_record['nrows'] = sheet['nrows']
+                    sheet_record['headers'] = sheet['headers']
+                    sheet_record['hxl_headers'] = sheet['hxl_headers']
+                    selected_resource['sheets'].append(sheet_record)
+                break
+
+    else:
+        log.info('No fs_check_info key found')
+        sheet_record = {}
+        sheet_record['sheet_name'] = None
+        sheet_record['ncols'] = None
+        sheet_record['nrows'] = None
+        sheet_record['headers'] = []
+        sheet_record['hxl_headers'] = []
+        selected_resource['sheets'].append(sheet_record)
+
+    return selected_resource

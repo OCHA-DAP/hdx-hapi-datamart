@@ -63,9 +63,6 @@ async def get_datamart_list(
 )
 async def get_datamart_search(
     common_parameters: Annotated[CommonEndpointParams, Depends(common_endpoint_parameters)],
-    fq: Annotated[
-        Optional[str], Query(max_length=128, description='Search HDX using a Solr format fq query string')
-    ] = None,
     resource_hdx_id: Annotated[Optional[str], Query(max_length=36, description=f'{DOC_HDX_RESOURCE_ID}')] = None,
     main_query: Annotated[
         Optional[str], Query(max_length=1024, description='Search HDX using a Solr main query expression')
