@@ -158,7 +158,7 @@ def decorate_with_fs_check_info(original_resource: dict, selected_resource: dict
         sheet_record['nrows'] = None
         sheet_record['headers'] = []
         sheet_record['hxl_headers'] = []
-        sheet_record['is_hxlated'] = False
+        sheet_record['is_hxlated'] = None
         selected_resource['sheets'].append(sheet_record)
 
     return selected_resource

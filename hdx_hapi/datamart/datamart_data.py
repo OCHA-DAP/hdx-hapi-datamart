@@ -70,6 +70,7 @@ async def datamart_data(
             )
 
     log.info(resource_metadata)
+    # Error on resource not found
     if download_url is None:
         log.info(
             f'Resource not found for dataset_hdx_stub= {dataset_hdx_stub}, '
@@ -94,9 +95,10 @@ async def datamart_data(
     assert results_from_backend is not None
     # Pop hxl row, if required
     results_from_backend = remove_hxl_row(results_from_backend, resource_metadata, sheet_name=sheet_name)
-    total_rows = len(results_from_backend)
     # Apply data filter
-
+    if data_filter:
+        results_from_backend = filter_data(results_from_backend, data_filter)
+    total_rows = len(results_from_backend)
     # Apply pagination
     try:
         results_from_backend = results_from_backend[
@@ -123,7 +125,7 @@ def pandas_backend(resource_metadata: dict, sheet_name: Optional[str]) -> list[d
     file_format = resource_metadata['format']
     results = []
     try:
-        if file_format == 'XLS':
+        if file_format.upper() in ['XLS', 'XLSX']:
             if sheet_name is None:
                 dataframe = pandas.read_excel(download_url)
             else:
@@ -182,16 +184,13 @@ def hxl_proxy_backend(resource_metadata: dict, sheet_name: Optional[str]) -> lis
         decorated_row = zip(headers, result)
         decorated_results.append(decorated_row)
 
-    total_rows = len(decorated_results)
-
-    return decorated_results, total_rows
+    return decorated_results
 
 
 def remove_hxl_row(
     decorated_results: list[dict], resource_metadata: dict, sheet_name: Optional[str] = None
 ) -> list[dict]:
-    # We could detect HXL rows here
-    is_hxlated = False
+    is_hxlated = None
     if not sheet_name:
         is_hxlated = resource_metadata['sheets'][0]['is_hxlated']
     else:
@@ -202,7 +201,19 @@ def remove_hxl_row(
                 if sheet_name == sheet['sheet_name']:
                     is_hxlated = sheet['is_hxlated']
                     break
+        except IndexError:
+            is_hxlated = None
 
+    # is_hxlated detection would go here:
+    if is_hxlated is None:
+        n_hashes = 0
+        for k, v in decorated_results[0].items():
+            if '#' in v:
+                n_hashes += 1
+        if n_hashes > 3:
+            is_hxlated = True
+        else:
+            is_hxlated = False
     # Pop HXL row if it exists
     if is_hxlated:
         decorated_results = decorated_results[1:]
@@ -224,3 +235,35 @@ def calculate_paging_metadata(pagination_parameters, decorated_results, total_ro
     }
     log.info(paging_metadata)
     return paging_metadata
+
+
+def filter_data(rows: list[dict], data_filter: str) -> list[dict]:
+    filtered_data = []
+    #
+    try:
+        field_, value_ = parse_data_filter(data_filter)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=f'{data_filter} is not a valid data_filter, it should be of the form fieldname:value',
+        )
+
+    if field_ not in rows[0]:
+        raise HTTPException(
+            status_code=400,
+            detail=f'{field_} is not a field in the data provided',
+        )
+    for row in rows:
+        if value_ in row[field_]:
+            filtered_data.append(row)
+
+    return filtered_data
+
+
+def parse_data_filter(data_filter: str) -> tuple[str, str]:
+    field_ = None
+    value_ = None
+
+    field_, value_ = data_filter.split(':')
+
+    return field_.strip(), value_.strip()
