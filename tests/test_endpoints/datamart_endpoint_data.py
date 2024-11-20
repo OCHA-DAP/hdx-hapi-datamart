@@ -34,6 +34,7 @@ datamart_endpoint_data = {
             'dataset_subnational',
             'dataset_updated_by_script',
             'dataset_license_and_attribution',
+            'dataset_organization',
             'n_sheets',
             'sheet_names',
             'sheets',
