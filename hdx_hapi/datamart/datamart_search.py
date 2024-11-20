@@ -67,7 +67,6 @@ async def search_by_query(
     url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
     response_items = await call_ckan_api(params, url)
     # Extract resources from response:
-    print(response_items, flush=True)
     if 'result' in response_items:
         for dataset in response_items['result']['results']:
             for original_resource in dataset['resources']:
@@ -87,7 +86,7 @@ async def call_ckan_api(params: dict, url: str) -> dict:
             response = await ac.get(url, params=params, timeout=60)
         # response.raise_for_status()
     except httpx.ConnectTimeout:
-        print(f'**Timeout in {time.time() - t0:0.2f} seconds')
+        log.info(f'**Timeout in {time.time() - t0:0.2f} seconds')
         response = None
     except Exception as exc:
         log.info(f'{exc}')
@@ -152,7 +151,7 @@ def decorate_with_fs_check_info(original_resource: dict, selected_resource: dict
                 and 'error' not in entry['hxl_proxy_response'].keys()
             ):
                 if len(entry['sheet_changes']) != 0:
-                    print(entry['sheet_changes'], flush=True)
+                    log.info(entry['sheet_changes'])
                 selected_resource['n_sheets'] = len(entry['hxl_proxy_response']['sheets'])
                 number_of_sheets = len(entry['hxl_proxy_response']['sheets'])
 
