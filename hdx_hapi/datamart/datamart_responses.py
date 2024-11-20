@@ -1,5 +1,7 @@
 import datetime
 from enum import Enum
+
+from typing import Optional
 from pydantic import ConfigDict, Field, HttpUrl
 from hdx_hapi.config.doc_snippets import (
     DOC_HDX_DATASET_ID,
@@ -40,7 +42,7 @@ class DatamartSearchResponse(HapiBaseModel):
     last_modified: datetime.datetime = Field(description='Datetime that the resource was last modified')
     metadata_modified: datetime.datetime = Field(description='Datetime that the resource metadata was last modified')
     position: int = Field(description='The position in the dataset of the resource')
-    size: int = Field(description='The size of the resource in bytes')
+    size: Optional[int] = Field(description='The size of the resource in bytes')
     dataset_notes: str = Field(max_length=2048, description='Notes on the host dataset for the resource')
     dataset_title: str = Field(max_length=512, description='Title on the host dataset for the resource')
     dataset_name: str = Field(max_length=512, description='Name on the host dataset for the resource')
@@ -49,6 +51,7 @@ class DatamartSearchResponse(HapiBaseModel):
     dataset_license_and_attribution: str = Field(
         max_length=512, description='Summary of license and attribution information'
     )
+    dataset_organization: str = Field(max_length=512, description='Organization from host dataset')
     n_sheets: int = Field(description='The number of sheets in a spreadsheet resource, always 1 for CSV data')
     sheet_names: list = Field(description='List of sheet names in a spreadsheet')
     sheets: list = Field(description='A list of dictionaries describing each ')

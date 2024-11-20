@@ -38,7 +38,9 @@ async def datamart_search(
         resource = await search_by_resource_id(resource_id)
         results.append(resource)
     elif filter_query is not None or main_query is not None:
-        results = await search_by_query(filter_query=filter_query, main_query=main_query)
+        results = await search_by_query(
+            filter_query=filter_query, main_query=main_query, pagination_params=pagination_params
+        )
     elif lucky_dip:
         resource = await search_by_lucky_dip()
         results.append(resource)
@@ -48,7 +50,9 @@ async def datamart_search(
     return results
 
 
-async def search_by_query(filter_query: Optional[str], main_query: Optional[str]) -> list[dict]:
+async def search_by_query(
+    filter_query: Optional[str], main_query: Optional[str], pagination_params: PaginationParams
+) -> list[dict]:
     log.info(f'query with filter_query={filter_query}, main_query={main_query}')
     results = []
     params = {}
@@ -57,9 +61,13 @@ async def search_by_query(filter_query: Optional[str], main_query: Optional[str]
     if main_query is not None:
         params['q'] = main_query
 
+    params['start'] = pagination_params.offset
+    params['rows'] = pagination_params.limit
+
     url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
     response_items = await call_ckan_api(params, url)
     # Extract resources from response:
+    print(response_items, flush=True)
     if 'result' in response_items:
         for dataset in response_items['result']['results']:
             for original_resource in dataset['resources']:
@@ -115,6 +123,10 @@ def decorate_with_dataset_metadata(dataset_metadata: dict, resource: dict) -> di
     resource['dataset_notes'] = dataset_metadata.get('notes', '')
     resource['dataset_subnational'] = dataset_metadata.get('subnational', '')
     resource['dataset_updated_by_script'] = dataset_metadata.get('updated_by_script', '')
+    try:
+        resource['dataset_organization'] = dataset_metadata['organization']['title']
+    except KeyError:
+        resource['dataset_organization'] = ''
     # License information
     license_title = dataset_metadata.get('license_title', '')
     license_source = dataset_metadata.get('dataset_source', '')
@@ -135,11 +147,15 @@ def decorate_with_fs_check_info(original_resource: dict, selected_resource: dict
         log.info(f'Number of fs_check_info_entries {len(fs_check_info_dict)}')
         fs_check_info_dict.reverse()  # This makes sure we get the most recent file structure check
         for entry in fs_check_info_dict:
-            if 'File structure check completed' in entry['message']:
+            if (
+                'File structure check completed' in entry['message']
+                and 'error' not in entry['hxl_proxy_response'].keys()
+            ):
                 if len(entry['sheet_changes']) != 0:
                     print(entry['sheet_changes'], flush=True)
                 selected_resource['n_sheets'] = len(entry['hxl_proxy_response']['sheets'])
                 number_of_sheets = len(entry['hxl_proxy_response']['sheets'])
+
                 log.info(f'{number_of_sheets} sheets found in resource')
                 for sheet in entry['hxl_proxy_response']['sheets']:
                     log.info(sheet['name'])
@@ -148,9 +164,9 @@ def decorate_with_fs_check_info(original_resource: dict, selected_resource: dict
                     sheet_record['sheet_name'] = sheet['name']
                     sheet_record['ncols'] = sheet['ncols']
                     sheet_record['nrows'] = sheet['nrows']
-                    sheet_record['headers'] = sheet['headers']
-                    sheet_record['hxl_headers'] = sheet['hxl_headers']
-                    sheet_record['is_hxlated'] = sheet['is_hxlated']
+                    sheet_record['headers'] = sheet.get('headers', '')
+                    sheet_record['hxl_headers'] = sheet.get('hxl_headers', '')
+                    sheet_record['is_hxlated'] = sheet.get('is_hxlated', '')
                     selected_resource['sheets'].append(sheet_record)
                 break
 
