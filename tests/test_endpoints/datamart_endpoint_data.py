@@ -15,7 +15,7 @@ datamart_endpoint_data = {
             'resource_hdx_id': '96b24403-0de4-4652-bb76-f585c04b5e6d',
             'lucky_dip': True,
             'main_query': 'clima*',
-            'filter_query': 'res_format:(CSV and XLS)',
+            'filter_query': 'organization:"gates-foundation"',
         },
         'expected_fields': [
             'resource_name',
