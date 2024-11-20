@@ -1,3 +1,4 @@
+from ast import Attribute
 import datetime
 import json
 import logging
@@ -144,7 +145,11 @@ def decorate_with_fs_check_info(original_resource: dict, selected_resource: dict
     if 'fs_check_info' in original_resource.keys():
         fs_check_info_dict = json.loads(original_resource['fs_check_info'])
         log.info(f'Number of fs_check_info_entries {len(fs_check_info_dict)}')
-        fs_check_info_dict.reverse()  # This makes sure we get the most recent file structure check
+        try:
+            fs_check_info_dict.reverse()  # This makes sure we get the most recent file structure check
+        except AttributeError:
+            log.info(fs_check_info_dict)
+            raise
         for entry in fs_check_info_dict:
             if (
                 'File structure check completed' in entry['message']
