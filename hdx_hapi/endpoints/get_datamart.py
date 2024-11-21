@@ -7,6 +7,7 @@ from hdx_hapi.config.doc_snippets import (
     DOC_SEE_DATASET,
     DOC_HDX_RESOURCE_STUB,
 )
+from hdx_hapi.datamart.datamart_util import SearchCommonEndpointParams, search_common_endpoint_parameters
 from hdx_hapi.endpoints.models.base import HapiGenericResponse
 from hdx_hapi.datamart.datamart_responses import (
     DatamartSearchResponse,
@@ -68,7 +69,7 @@ async def get_datamart_list(
     summary='Get information about resources in the HAPI datamart which come from HDX',
 )
 async def get_datamart_search(
-    common_parameters: Annotated[CommonEndpointParams, Depends(common_endpoint_parameters)],
+    search_common_parameters: Annotated[SearchCommonEndpointParams, Depends(search_common_endpoint_parameters)],
     resource_hdx_id: Annotated[Optional[str], Query(max_length=36, description=f'{DOC_HDX_RESOURCE_ID}')] = None,
     main_query: Annotated[
         Optional[str], Query(max_length=1024, description='Search HDX using a Solr main query expression')
@@ -83,7 +84,7 @@ async def get_datamart_search(
     Provide a search facility to retreive metadata from HDX for use in the datamart /data endpoint
     """
     result = await get_datamart_search_srv(
-        pagination_parameters=common_parameters,
+        search_pagination_parameters=search_common_parameters,
         resource_hdx_id=resource_hdx_id,
         main_query=main_query,
         filter_query=filter_query,

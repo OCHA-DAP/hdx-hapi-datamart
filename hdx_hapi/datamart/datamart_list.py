@@ -30,7 +30,7 @@ async def datamart_list(pagination_parameters: PaginationParams, list_type: Opti
             rows = list(csv.DictReader(countries_file))[1:]
 
         results = [
-            {'value': x['ISO 3166-1 Alpha 3-Codes'], 'description': x['Preferred Term']}
+            {'value': x['ISO 3166-1 Alpha 3-Codes'].lower(), 'description': x['Preferred Term']}
             for x in rows
             if len(x['ISO 3166-1 Alpha 3-Codes']) == 3
         ]

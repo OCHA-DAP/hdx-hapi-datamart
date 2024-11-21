@@ -11,7 +11,7 @@ from fastapi import HTTPException
 from random import randrange
 from typing import Optional
 from httpx import AsyncClient
-from hdx_hapi.endpoints.util.util import PaginationParams
+from hdx_hapi.datamart.datamart_util import SearchPaginationParams
 
 from hdx_hapi.config.config import get_config
 
@@ -26,7 +26,7 @@ RESOURCE_SHOW_ENDPOINT = '/api/action/resource_show'
 
 
 async def datamart_search(
-    pagination_params: PaginationParams,
+    search_pagination_params: SearchPaginationParams,
     filter_query: Optional[str] = None,
     main_query: Optional[str] = None,
     resource_id: Optional[str] = None,
@@ -39,7 +39,7 @@ async def datamart_search(
         results.append(resource)
     elif filter_query is not None or main_query is not None:
         results = await search_by_query(
-            filter_query=filter_query, main_query=main_query, pagination_params=pagination_params
+            filter_query=filter_query, main_query=main_query, search_pagination_params=search_pagination_params
         )
     elif lucky_dip:
         resource = await search_by_lucky_dip()
@@ -51,7 +51,7 @@ async def datamart_search(
 
 
 async def search_by_query(
-    filter_query: Optional[str], main_query: Optional[str], pagination_params: PaginationParams
+    filter_query: Optional[str], main_query: Optional[str], search_pagination_params: SearchPaginationParams
 ) -> list[dict]:
     log.info(f'query with filter_query={filter_query}, main_query={main_query}')
     results = []
@@ -61,8 +61,8 @@ async def search_by_query(
     if main_query is not None:
         params['q'] = main_query
 
-    params['start'] = pagination_params.offset
-    params['rows'] = pagination_params.limit
+    params['start'] = search_pagination_params.offset
+    params['rows'] = search_pagination_params.limit
 
     url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
     response_items = await call_ckan_api(params, url)
@@ -143,12 +143,21 @@ def decorate_with_fs_check_info(original_resource: dict, selected_resource: dict
     selected_resource['sheets'] = []
     if 'fs_check_info' in original_resource.keys():
         fs_check_info_dict = json.loads(original_resource['fs_check_info'])
+        if isinstance(fs_check_info_dict, dict):
+            log.info(f'fs_check_info was a dictionary: {fs_check_info_dict}')
+            sheet_record = {}
+            sheet_record['sheet_name'] = None
+            sheet_record['ncols'] = None
+            sheet_record['nrows'] = None
+            sheet_record['headers'] = []
+            sheet_record['hxl_headers'] = []
+            sheet_record['is_hxlated'] = None
+            selected_resource['sheets'].append(sheet_record)
+
+            return selected_resource
+
         log.info(f'Number of fs_check_info_entries {len(fs_check_info_dict)}')
-        try:
-            fs_check_info_dict.reverse()  # This makes sure we get the most recent file structure check
-        except AttributeError:
-            log.info(fs_check_info_dict)
-            raise
+        fs_check_info_dict.reverse()  # This makes sure we get the most recent file structure check
         for entry in fs_check_info_dict:
             if (
                 'File structure check completed' in entry['message']

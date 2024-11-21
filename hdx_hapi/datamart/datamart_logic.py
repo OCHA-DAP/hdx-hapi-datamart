@@ -4,6 +4,7 @@ from hdx_hapi.datamart.datamart_list import datamart_list
 from hdx_hapi.datamart.datamart_search import datamart_search
 from hdx_hapi.datamart.datamart_data import datamart_data
 from hdx_hapi.datamart.datamart_responses import BackendEnum, ListTypeEnum
+from hdx_hapi.datamart.datamart_util import SearchPaginationParams
 from hdx_hapi.endpoints.util.util import PaginationParams
 
 
@@ -18,13 +19,13 @@ async def get_datamart_list_srv(pagination_parameters: PaginationParams, list_ty
 
 
 async def get_datamart_search_srv(
-    pagination_parameters: PaginationParams,
+    search_pagination_parameters: SearchPaginationParams,
     filter_query: Optional[str] = None,
     main_query: Optional[str] = None,
     resource_hdx_id: Optional[str] = None,
     lucky_dip: Optional[bool] = None,
 ):
-    results = await datamart_search(pagination_parameters, filter_query, main_query, resource_hdx_id, lucky_dip)
+    results = await datamart_search(search_pagination_parameters, filter_query, main_query, resource_hdx_id, lucky_dip)
     return results
 
 
