@@ -8,7 +8,6 @@ from hdx_hapi.config.doc_snippets import (
     DOC_HDX_RESOURCE_STUB,
 )
 from hdx_hapi.datamart.datamart_util import SearchCommonEndpointParams, search_common_endpoint_parameters
-from hdx_hapi.endpoints.models.base import HapiGenericResponse
 from hdx_hapi.datamart.datamart_responses import (
     DatamartGenericResponse,
     DatamartSearchResponse,
