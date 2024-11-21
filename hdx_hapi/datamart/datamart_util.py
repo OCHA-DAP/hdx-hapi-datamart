@@ -45,3 +45,19 @@ async def search_common_endpoint_parameters(
     app_identifier: Annotated[Optional[str], common_app_identifier_query] = None,
 ) -> SearchCommonEndpointParams:
     return SearchCommonEndpointParams(**search_pagination_parameters.model_dump(), app_identifier=app_identifier)
+
+
+def calculate_paging_metadata(pagination_parameters, decorated_results, total_rows):
+    returned_rows = len(decorated_results)
+
+    if returned_rows < pagination_parameters.limit:
+        next_offset = None
+    else:
+        next_offset = pagination_parameters.offset + pagination_parameters.limit
+    paging_metadata = {
+        'total_rows': total_rows,
+        'returned_rows': returned_rows,
+        'current_offset': pagination_parameters.offset,
+        'next_offset': next_offset,
+    }
+    return paging_metadata

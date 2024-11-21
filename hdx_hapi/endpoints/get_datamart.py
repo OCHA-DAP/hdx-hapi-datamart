@@ -10,6 +10,7 @@ from hdx_hapi.config.doc_snippets import (
 from hdx_hapi.datamart.datamart_util import SearchCommonEndpointParams, search_common_endpoint_parameters
 from hdx_hapi.endpoints.models.base import HapiGenericResponse
 from hdx_hapi.datamart.datamart_responses import (
+    DatamartGenericResponse,
     DatamartSearchResponse,
     DatamartDataResponse,
     DatamartListResponse,
@@ -33,13 +34,13 @@ router = APIRouter(
 
 @router.get(
     '/api/datamart/list',
-    response_model=HapiGenericResponse[DatamartListResponse],
+    response_model=DatamartGenericResponse[DatamartListResponse],
     summary='Get lists of entities available to query the HAPI datamart i.e. tags, country codes, dataseries names',
     include_in_schema=False,
 )
 @router.get(
     '/api/v1/datamart/list',
-    response_model=HapiGenericResponse[DatamartListResponse],
+    response_model=DatamartGenericResponse[DatamartListResponse],
     summary='Get lists of entities available to query the HAPI datamart i.e. tags, country codes, dataseries names',
 )
 async def get_datamart_list(
@@ -54,7 +55,19 @@ async def get_datamart_list(
     for use with the search and data endpoints
     """
     result = await get_datamart_list_srv(pagination_parameters=common_parameters, list_type=list_type)
-    return transform_result_to_csv_stream_if_requested(result, output_format, DatamartListResponse)
+
+    formatted_data = transform_result_to_csv_stream_if_requested(result['data'], output_format, DatamartDataResponse)
+
+    response = None
+    if isinstance(formatted_data, dict):
+        response = {}
+        response['data'] = formatted_data['data']
+        response['resource_metadata'] = result['resource_metadata']
+        response['paging_metadata'] = result['paging_metadata']
+    else:
+        response = formatted_data
+
+    return response
 
 
 @router.get(

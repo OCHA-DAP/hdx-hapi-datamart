@@ -11,7 +11,7 @@ from httpx import Client
 from fastapi import HTTPException
 from hdx_hapi.datamart.datamart_responses import BackendEnum
 from hdx_hapi.datamart.datamart_search import search_by_resource_id, search_by_query, search_by_lucky_dip
-from hdx_hapi.datamart.datamart_util import SearchPaginationParams
+from hdx_hapi.datamart.datamart_util import SearchPaginationParams, calculate_paging_metadata
 from hdx_hapi.endpoints.util.util import PaginationParams
 
 from hdx_hapi.config.config import get_config
@@ -224,23 +224,6 @@ def remove_hxl_row(
     if is_hxlated:
         decorated_results = decorated_results[1:]
     return decorated_results
-
-
-def calculate_paging_metadata(pagination_parameters, decorated_results, total_rows):
-    returned_rows = len(decorated_results)
-
-    if returned_rows < pagination_parameters.limit:
-        next_offset = None
-    else:
-        next_offset = pagination_parameters.offset + pagination_parameters.limit
-    paging_metadata = {
-        'total_rows': total_rows,
-        'returned_rows': returned_rows,
-        'current_offset': pagination_parameters.offset,
-        'next_offset': next_offset,
-    }
-    log.info(paging_metadata)
-    return paging_metadata
 
 
 def filter_data(rows: list[dict], data_filter: str) -> list[dict]:

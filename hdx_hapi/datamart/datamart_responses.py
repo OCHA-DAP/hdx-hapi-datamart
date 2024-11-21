@@ -1,8 +1,8 @@
 import datetime
 from enum import Enum
 
-from typing import Optional
-from pydantic import ConfigDict, Field, HttpUrl
+from typing import Any, Generic, List, Optional, TypeVar
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 from hdx_hapi.config.doc_snippets import (
     DOC_HDX_DATASET_ID,
     DOC_HDX_RESOURCE_FORMAT,
@@ -10,6 +10,16 @@ from hdx_hapi.config.doc_snippets import (
     truncate_query_description,
 )
 from hdx_hapi.endpoints.models.base import HapiBaseModel
+
+
+DataT = TypeVar('DataT')
+
+
+class DatamartGenericResponse(BaseModel, Generic[DataT]):
+    data: List[DataT]
+    paging_metadata: Any
+    resource_metadata: Any
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DatamartListResponse(HapiBaseModel):
