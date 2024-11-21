@@ -50,7 +50,7 @@ async def test_get_with_query_params(event_loop, endpoint):
 @pytest.mark.asyncio
 async def test_get_search(event_loop):
     log.info('started datamart search test')
-    params = {'filter_query': r'dataset_source:ETH\ Zurich\ Climada'}
+    params = {'filter_query': r'dataset_source:ETH\ Zurich\ Climada', 'limit': 10}
     async with AsyncClient(app=app, base_url='http://test', params=params) as ac:
         response = await ac.get('/api/v1/datamart/search')
 
@@ -61,7 +61,7 @@ async def test_get_search(event_loop):
 @pytest.mark.asyncio
 async def test_get_search_lucky_dip(event_loop):
     log.info('Started datamart lucky dip search test')
-    params = {'lucky_dip': True}
+    params = {'lucky_dip': True, 'limit': 10}
     async with AsyncClient(app=app, base_url='http://test', params=params) as ac:
         response = await ac.get('/api/v1/datamart/search')
 
