@@ -1,13 +1,20 @@
 from typing import Annotated, Optional
 from fastapi import Depends, Query, APIRouter
 
-from hdx_hapi.config.doc_snippets import DOC_HDX_RESOURCE_ID
-from hdx_hapi.endpoints.models.base import HapiGenericResponse
+from hdx_hapi.config.doc_snippets import (
+    DOC_HDX_RESOURCE_ID,
+    DOC_HDX_DATASET_IN_RESOURCE_NAME,
+    DOC_SEE_DATASET,
+    DOC_HDX_RESOURCE_STUB,
+)
+from hdx_hapi.datamart.datamart_util import SearchCommonEndpointParams, search_common_endpoint_parameters
 from hdx_hapi.datamart.datamart_responses import (
+    DatamartGenericResponse,
     DatamartSearchResponse,
     DatamartDataResponse,
     DatamartListResponse,
     ListTypeEnum,
+    BackendEnum,
 )
 from hdx_hapi.endpoints.util.util import (
     CommonEndpointParams,
@@ -26,14 +33,22 @@ router = APIRouter(
 
 @router.get(
     '/api/datamart/list',
-    response_model=HapiGenericResponse[DatamartListResponse],
-    summary='Get lists of entities available to query the HAPI datamart i.e. tags, country codes, dataseries names',
+    response_model=DatamartGenericResponse[DatamartListResponse],
+    summary=(
+        'Get lists of entities available to use in the HAPI Datamart search endpoint. '
+        'They include approved tags, country codes, dataseries names, HAPI resources, '
+        'Solr query fields and organizations'
+    ),
     include_in_schema=False,
 )
 @router.get(
     '/api/v1/datamart/list',
-    response_model=HapiGenericResponse[DatamartListResponse],
-    summary='Get lists of entities available to query the HAPI datamart i.e. tags, country codes, dataseries names',
+    response_model=DatamartGenericResponse[DatamartListResponse],
+    summary=(
+        'Get lists of entities available to use in the HAPI Datamart search endpoint. '
+        'They include approved tags, country codes, dataseries names, HAPI resources, '
+        'Solr query fields and organizations'
+    ),
 )
 async def get_datamart_list(
     common_parameters: Annotated[CommonEndpointParams, Depends(common_endpoint_parameters)],
@@ -47,22 +62,34 @@ async def get_datamart_list(
     for use with the search and data endpoints
     """
     result = await get_datamart_list_srv(pagination_parameters=common_parameters, list_type=list_type)
-    return transform_result_to_csv_stream_if_requested(result, output_format, DatamartListResponse)
+
+    formatted_data = transform_result_to_csv_stream_if_requested(result['data'], output_format, DatamartDataResponse)
+
+    response = None
+    if isinstance(formatted_data, dict):
+        response = {}
+        response['data'] = formatted_data['data']
+        response['resource_metadata'] = result['resource_metadata']
+        response['paging_metadata'] = result['paging_metadata']
+    else:
+        response = formatted_data
+
+    return response
 
 
 @router.get(
     '/api/datamart/search',
-    response_model=HapiGenericResponse[DatamartSearchResponse],
+    response_model=DatamartGenericResponse[DatamartSearchResponse],
     summary='Get information about resources in the HAPI datamart which come from HDX',
     include_in_schema=False,
 )
 @router.get(
     '/api/v1/datamart/search',
-    response_model=HapiGenericResponse[DatamartSearchResponse],
+    response_model=DatamartGenericResponse[DatamartSearchResponse],
     summary='Get information about resources in the HAPI datamart which come from HDX',
 )
 async def get_datamart_search(
-    common_parameters: Annotated[CommonEndpointParams, Depends(common_endpoint_parameters)],
+    search_common_parameters: Annotated[SearchCommonEndpointParams, Depends(search_common_endpoint_parameters)],
     resource_hdx_id: Annotated[Optional[str], Query(max_length=36, description=f'{DOC_HDX_RESOURCE_ID}')] = None,
     main_query: Annotated[
         Optional[str], Query(max_length=1024, description='Search HDX using a Solr main query expression')
@@ -77,14 +104,25 @@ async def get_datamart_search(
     Provide a search facility to retreive metadata from HDX for use in the datamart /data endpoint
     """
     result = await get_datamart_search_srv(
-        pagination_parameters=common_parameters,
+        search_pagination_parameters=search_common_parameters,
         resource_hdx_id=resource_hdx_id,
         main_query=main_query,
         filter_query=filter_query,
         lucky_dip=lucky_dip,
     )
 
-    return transform_result_to_csv_stream_if_requested(result, output_format, DatamartSearchResponse)
+    formatted_data = transform_result_to_csv_stream_if_requested(result['data'], output_format, DatamartDataResponse)
+
+    response = None
+    if isinstance(formatted_data, dict):
+        response = {}
+        response['data'] = formatted_data['data']
+        response['resource_metadata'] = result['resource_metadata']
+        response['paging_metadata'] = result['paging_metadata']
+    else:
+        response = formatted_data
+
+    return response
 
 
 @router.get(
@@ -100,15 +138,48 @@ async def get_datamart_search(
 )
 async def get_datamart_data(
     common_parameters: Annotated[CommonEndpointParams, Depends(common_endpoint_parameters)],
-    # download_url: Annotated[
-    #     HttpUrl,
-    #     UrlConstraints(max_length=2083, allowed_schemes=['http', 'https']),
-    # ],
     download_url: Annotated[Optional[str], Query(max_length=2048, description='A direct download_url for HDX')] = None,
+    resource_hdx_id: Annotated[Optional[str], Query(max_length=36, description=f'{DOC_HDX_RESOURCE_ID}')] = None,
+    dataset_hdx_stub: Annotated[
+        Optional[str], Query(max_length=128, description=f'{DOC_HDX_DATASET_IN_RESOURCE_NAME} {DOC_SEE_DATASET}')
+    ] = None,
+    resource_hdx_stub: Annotated[Optional[str], Query(max_length=128, description=f'{DOC_HDX_RESOURCE_STUB}')] = None,
+    lucky_dip: Annotated[Optional[bool], Query(description='Return a random data file from HDX')] = None,
+    sheet_name: Annotated[
+        Optional[str], Query(max_length=36, description='The name or index of the required sheet in a spreadsheet')
+    ] = None,
+    data_filter: Annotated[
+        Optional[str], Query(max_length=512, description='A filter definition like fieldname:value')
+    ] = None,
+    backend: Annotated[
+        Optional[BackendEnum], Query(max_length=32, description='The backend, for development purposes')
+    ] = BackendEnum.PANDAS,
     output_format: OutputFormat = OutputFormat.JSON,
 ):
     """
     Provide a access to data in the HAPI datamart
     """
-    result = await get_datamart_data_srv(pagination_parameters=common_parameters, download_url=download_url)
-    return transform_result_to_csv_stream_if_requested(result, output_format, DatamartDataResponse)
+    result = await get_datamart_data_srv(
+        pagination_parameters=common_parameters,
+        download_url=download_url,
+        resource_hdx_id=resource_hdx_id,
+        dataset_hdx_stub=dataset_hdx_stub,
+        resource_hdx_stub=resource_hdx_stub,
+        lucky_dip=lucky_dip,
+        sheet_name=sheet_name,
+        data_filter=data_filter,
+        backend=backend,
+    )
+
+    formatted_data = transform_result_to_csv_stream_if_requested(result['data'], output_format, DatamartDataResponse)
+
+    response = None
+    if isinstance(formatted_data, dict):
+        response = {}
+        response['data'] = formatted_data['data']
+        response['resource_metadata'] = result['resource_metadata']
+        response['paging_metadata'] = result['paging_metadata']
+    else:
+        response = formatted_data
+
+    return response

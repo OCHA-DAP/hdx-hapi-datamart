@@ -1,6 +1,8 @@
 import datetime
 from enum import Enum
-from pydantic import ConfigDict, Field, HttpUrl
+
+from typing import Any, Generic, List, Optional, TypeVar
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 from hdx_hapi.config.doc_snippets import (
     DOC_HDX_DATASET_ID,
     DOC_HDX_RESOURCE_FORMAT,
@@ -8,6 +10,16 @@ from hdx_hapi.config.doc_snippets import (
     truncate_query_description,
 )
 from hdx_hapi.endpoints.models.base import HapiBaseModel
+
+
+DataT = TypeVar('DataT')
+
+
+class DatamartGenericResponse(BaseModel, Generic[DataT]):
+    data: List[DataT]
+    paging_metadata: Any
+    resource_metadata: Any
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DatamartListResponse(HapiBaseModel):
@@ -40,12 +52,16 @@ class DatamartSearchResponse(HapiBaseModel):
     last_modified: datetime.datetime = Field(description='Datetime that the resource was last modified')
     metadata_modified: datetime.datetime = Field(description='Datetime that the resource metadata was last modified')
     position: int = Field(description='The position in the dataset of the resource')
-    size: int = Field(description='The size of the resource in bytes')
+    size: Optional[int] = Field(description='The size of the resource in bytes')
     dataset_notes: str = Field(max_length=2048, description='Notes on the host dataset for the resource')
     dataset_title: str = Field(max_length=512, description='Title on the host dataset for the resource')
     dataset_name: str = Field(max_length=512, description='Name on the host dataset for the resource')
     dataset_subnational: str = Field(max_length=32, description='Subnational flag from host dataset')
     dataset_updated_by_script: str = Field(max_length=512, description='Updated by script from host dataset')
+    dataset_license_and_attribution: str = Field(
+        max_length=512, description='Summary of license and attribution information'
+    )
+    dataset_organization: str = Field(max_length=512, description='Organization from host dataset')
     n_sheets: int = Field(description='The number of sheets in a spreadsheet resource, always 1 for CSV data')
     sheet_names: list = Field(description='List of sheet names in a spreadsheet')
     sheets: list = Field(description='A list of dictionaries describing each ')
@@ -66,3 +82,9 @@ class ListTypeEnum(str, Enum):
     HAPI_RESOURCES = 'hapi_resources'
     SOLR_QUERY_FIELDS = 'solr_query_fields'
     ORGANIZATIONS = 'organizations'
+
+
+class BackendEnum(str, Enum):
+    PANDAS = 'pandas'
+    HXL_PROXY = 'hxl_proxy'
+    # DATASTORE = 'datastore'

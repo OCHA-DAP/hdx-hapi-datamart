@@ -25,7 +25,11 @@ async def test_get_with_query_params(event_loop, endpoint):
     expected_fields = endpoint_data['expected_fields']
     for param_name, param_value in query_parameters.items():
         log.info(f'Testing with parameter: {param_name}={param_value}')
-        async with AsyncClient(app=app, base_url='http://test', params={param_name: param_value}) as ac:
+        if endpoint == '/api/v1/datamart/search':
+            params = {param_name: param_value, 'limit': 5}
+        else:
+            params = {param_name: param_value}
+        async with AsyncClient(app=app, base_url='http://test', params=params) as ac:
             response = await ac.get(endpoint)
 
         assert response.status_code == 200, f'Failed for {param_name}={param_value}'
@@ -46,7 +50,7 @@ async def test_get_with_query_params(event_loop, endpoint):
 @pytest.mark.asyncio
 async def test_get_search(event_loop):
     log.info('started datamart search test')
-    params = {'filter_query': r'dataset_source:ETH\ Zurich\ Climada'}
+    params = {'filter_query': r'dataset_source:ETH\ Zurich\ Climada', 'limit': 10}
     async with AsyncClient(app=app, base_url='http://test', params=params) as ac:
         response = await ac.get('/api/v1/datamart/search')
 
@@ -57,7 +61,7 @@ async def test_get_search(event_loop):
 @pytest.mark.asyncio
 async def test_get_search_lucky_dip(event_loop):
     log.info('Started datamart lucky dip search test')
-    params = {'lucky_dip': True}
+    params = {'lucky_dip': True, 'limit': 10}
     async with AsyncClient(app=app, base_url='http://test', params=params) as ac:
         response = await ac.get('/api/v1/datamart/search')
 
@@ -73,3 +77,13 @@ async def test_get_data_file_not_found(event_loop):
         response = await ac.get('/api/v1/datamart/data')
 
     assert response.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_get_data_by_resource_and_dataset_name(event_loop):
+    log.info('Started datamart data by resource and dataset name ')
+    params = {'dataset_hdx_stub': 'climada-litpop-dataset', 'resource_hdx_stub': 'admin1-summaries-litpop.csv'}
+    async with AsyncClient(app=app, base_url='http://test', params=params) as ac:
+        response = await ac.get('/api/v1/datamart/data')
+
+    assert response.status_code == 200

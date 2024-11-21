@@ -3,7 +3,8 @@ from typing import Optional
 from hdx_hapi.datamart.datamart_list import datamart_list
 from hdx_hapi.datamart.datamart_search import datamart_search
 from hdx_hapi.datamart.datamart_data import datamart_data
-from hdx_hapi.datamart.datamart_responses import ListTypeEnum
+from hdx_hapi.datamart.datamart_responses import BackendEnum, ListTypeEnum
+from hdx_hapi.datamart.datamart_util import SearchPaginationParams
 from hdx_hapi.endpoints.util.util import PaginationParams
 
 
@@ -18,16 +19,36 @@ async def get_datamart_list_srv(pagination_parameters: PaginationParams, list_ty
 
 
 async def get_datamart_search_srv(
-    pagination_parameters: PaginationParams,
+    search_pagination_parameters: SearchPaginationParams,
     filter_query: Optional[str] = None,
     main_query: Optional[str] = None,
     resource_hdx_id: Optional[str] = None,
     lucky_dip: Optional[bool] = None,
 ):
-    results = await datamart_search(pagination_parameters, filter_query, main_query, resource_hdx_id, lucky_dip)
+    results = await datamart_search(search_pagination_parameters, filter_query, main_query, resource_hdx_id, lucky_dip)
     return results
 
 
-async def get_datamart_data_srv(pagination_parameters: PaginationParams, download_url: Optional[str]):
-    results = await datamart_data(pagination_parameters, download_url)
-    return results
+async def get_datamart_data_srv(
+    pagination_parameters: PaginationParams,
+    download_url: Optional[str],
+    resource_hdx_id: Optional[str],
+    dataset_hdx_stub: Optional[str],
+    resource_hdx_stub: Optional[str],
+    lucky_dip: Optional[bool],
+    sheet_name: Optional[str],
+    data_filter: Optional[str],
+    backend: Optional[BackendEnum],
+):
+    result = await datamart_data(
+        pagination_parameters,
+        download_url,
+        resource_hdx_id,
+        dataset_hdx_stub,
+        resource_hdx_stub,
+        lucky_dip,
+        sheet_name,
+        data_filter,
+        backend,
+    )
+    return result

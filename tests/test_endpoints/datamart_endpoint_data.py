@@ -15,7 +15,7 @@ datamart_endpoint_data = {
             'resource_hdx_id': '96b24403-0de4-4652-bb76-f585c04b5e6d',
             'lucky_dip': True,
             'main_query': 'clima*',
-            'filter_query': 'res_format:(CSV and XLS)',
+            'filter_query': 'organization:"gates-foundation"',
         },
         'expected_fields': [
             'resource_name',
@@ -33,6 +33,8 @@ datamart_endpoint_data = {
             'dataset_name',
             'dataset_subnational',
             'dataset_updated_by_script',
+            'dataset_license_and_attribution',
+            'dataset_organization',
             'n_sheets',
             'sheet_names',
             'sheets',
@@ -41,6 +43,7 @@ datamart_endpoint_data = {
     '/api/v1/datamart/data': {
         'query_parameters': {
             'download_url': 'https://data.humdata.org/dataset/3527869c-8fe9-4289-9d57-1811e789bf60/resource/96b24403-0de4-4652-bb76-f585c04b5e6d/download/admin1-summaries-litpop.csv',
+            'resource_hdx_id': '96b24403-0de4-4652-bb76-f585c04b5e6d',
         },
         'expected_fields': [
             'country_name',

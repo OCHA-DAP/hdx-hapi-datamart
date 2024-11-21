@@ -4,6 +4,7 @@ import os
 from typing import Optional
 from httpx import Client
 from hdx_hapi.datamart.datamart_responses import ListTypeEnum
+from hdx_hapi.datamart.datamart_util import calculate_paging_metadata
 from hdx_hapi.endpoints.util.util import PaginationParams
 
 DATAFILE_ROOT = os.path.join(os.path.dirname(__file__), 'list-data')
@@ -22,6 +23,7 @@ Sources for the list data:
 
 async def datamart_list(pagination_parameters: PaginationParams, list_type: Optional[ListTypeEnum]):
     results = []
+    resource_metadata = {'list_type': list_type, 'list_source': None}
     if list_type == ListTypeEnum.ISO3_COUNTRY_CODES:
         with open(
             os.path.join(DATAFILE_ROOT, '2024-10-23-countries-and-territories-taxonomy-hxl-tags.csv'), encoding='utf-8'
@@ -30,20 +32,32 @@ async def datamart_list(pagination_parameters: PaginationParams, list_type: Opti
             rows = list(csv.DictReader(countries_file))[1:]
 
         results = [
-            {'value': x['ISO 3166-1 Alpha 3-Codes'], 'description': x['Preferred Term']}
+            {'value': x['ISO 3166-1 Alpha 3-Codes'].lower(), 'description': x['Preferred Term']}
             for x in rows
             if len(x['ISO 3166-1 Alpha 3-Codes']) == 3
         ]
+        resource_metadata['list_source'] = (
+            'https://github.com/OCHA-DAP/hdx-python-country/blob/main/src/hdx/location/'
+            'Countries%20%26%20Territories%20Taxonomy%20MVP%20-%20C%26T%20Taxonomy%20with%20HXL%20Tags.csv'
+        )
     elif list_type == ListTypeEnum.DATASERIES:
         with open(os.path.join(DATAFILE_ROOT, '2023-11-dataseries_summary.csv'), encoding='utf-8') as dataseries_file:
             rows = list(csv.DictReader(dataseries_file))
 
         results = [{'value': x['Data series name'], 'description': ''} for x in rows]
+        resource_metadata['list_source'] = (
+            'https://github.com/OCHA-DAP/HDX_data_series/blob/main/23-11-dataseries_summary.csv'
+        )
     elif list_type == ListTypeEnum.TAGS:
         with open(os.path.join(DATAFILE_ROOT, '2024-10-hdx-accepted-tags.csv'), encoding='utf-8') as tags_file:
             rows = list(csv.DictReader(tags_file))
 
         results = [{'value': x['tag'], 'description': x['description']} for x in rows]
+        resource_metadata['list_source'] = (
+            'https://docs.google.com/spreadsheets/d/e/'
+            '2PACX-1vQD3ba751XbWS5GVwdJmzOF9mc7dnm56hE2U8di12JnpYkdseILmjfGSn1W7UVQzmHKSd6p8FWaXdFL'
+            '/pub?gid=1768359211&single=true&output=csv'
+        )
     elif list_type == ListTypeEnum.HAPI_RESOURCES:
         openapi_url = 'https://hapi.humdata.org/openapi.json'
         with Client() as ac:
@@ -60,6 +74,7 @@ async def datamart_list(pagination_parameters: PaginationParams, list_type: Opti
                 description = ''
             row = {'value': path_, 'description': description}
             results.append(row)
+        resource_metadata['list_source'] = 'https://hapi.humdata.org/openapi.json'
     elif list_type == ListTypeEnum.ORGANIZATIONS:
         organisation_list_url = 'https://data.humdata.org/api/action/organization_list?all_fields=True'
         with Client() as ac:
@@ -72,6 +87,7 @@ async def datamart_list(pagination_parameters: PaginationParams, list_type: Opti
         for record in records:
             row = {'value': record['name'], 'description': record['description']}
             results.append(row)
+        resource_metadata['list_source'] = 'https://data.humdata.org/api/action/organization_list?all_fields=True'
     elif list_type == ListTypeEnum.SOLR_QUERY_FIELDS:
         with open(
             os.path.join(DATAFILE_ROOT, '2024-11-08-hdx-fields-in-solr.csv'), encoding='utf-8'
@@ -83,10 +99,25 @@ async def datamart_list(pagination_parameters: PaginationParams, list_type: Opti
             for x in rows
             if x['Queryable'].lower() == 'yes'
         ]
+        resource_metadata['list_source'] = (
+            'https://docs.google.com/spreadsheets/d/'
+            '1OzDQrnUZXiI1RuveE0HWVgbHDkohyJToRJnraDZMJOI/edit?pli=1&gid=0#gid=0'
+        )
 
+    total_rows = len(results)
     try:
         results = results[pagination_parameters.offset : (pagination_parameters.offset + pagination_parameters.limit)]
     except IndexError:
         results = results
 
-    return results
+    # Make paging_metadata
+    paging_metadata = calculate_paging_metadata(pagination_parameters, results, total_rows)
+
+    # Attach the resource_metadata to the results here
+    results_dictionary = {
+        'resource_metadata': resource_metadata,
+        'paging_metadata': paging_metadata,
+        'data': results,
+    }
+
+    return results_dictionary
