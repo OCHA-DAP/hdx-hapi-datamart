@@ -11,6 +11,7 @@ from httpx import Client
 from fastapi import HTTPException
 from hdx_hapi.datamart.datamart_responses import BackendEnum
 from hdx_hapi.datamart.datamart_search import search_by_resource_id, search_by_query, search_by_lucky_dip
+from hdx_hapi.datamart.datamart_util import SearchPaginationParams
 from hdx_hapi.endpoints.util.util import PaginationParams
 
 from hdx_hapi.config.config import get_config
@@ -49,7 +50,12 @@ async def datamart_data(
             if 'download_url' in resource_metadata:
                 download_url = resource_metadata['download_url']
         if dataset_hdx_stub and resource_hdx_stub:
-            results = await search_by_query(f'name:{dataset_hdx_stub}', None)
+            dataset_resource_pagination = SearchPaginationParams(limit=5, offset=0)
+            results = await search_by_query(
+                f'name:{dataset_hdx_stub}',
+                None,
+                search_pagination_params=dataset_resource_pagination,
+            )
             for resource_metadata in results:
                 if resource_metadata['resource_name'] == resource_hdx_stub:
                     download_url = resource_metadata['download_url']
