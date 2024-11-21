@@ -36,6 +36,7 @@ async def datamart_search(
     log.info(f'Query parameters: {locals()}')
     total_rows = None
     search_type = None
+    n_rows_returned = None
     if resource_id is not None:
         resource = await search_by_resource_id(resource_id)
         results.append(resource)
@@ -248,16 +249,16 @@ async def search_by_lucky_dip() -> dict:
     log.info('Lucky dip query')
     # Call package search to get a number of datasets (we could hard code this) - filter to
     url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
-    params = {'fq': 'res_format:(CSV and XLS)'}
-    response_items = await call_ckan_api(params, url)
+    count_params = {'fq': 'res_format:(CSV and XLS)'}
+    response_items = await call_ckan_api(count_params, url)
     n_datasets = response_items['result']['count']
 
+    # Now do a second query with a random start, using the first to get the range of offsets possible
     # Make a random offset in the range 0, n datasets
     random_start = randrange(0, n_datasets)
     # query with offset (start) = random, limit (rows) = 1
-    params['start'] = random_start
-    params['rows'] = 1
-    random_item = await call_ckan_api(params, url)
+    random_offset_params = {'fq': 'res_format:(CSV and XLS)', 'start': random_start, 'rows': 1}
+    random_item = await call_ckan_api(random_offset_params, url)
     # Pick first resource?
     resource = {}
     if 'result' in random_item:

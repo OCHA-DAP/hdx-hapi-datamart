@@ -87,4 +87,4 @@ class ListTypeEnum(str, Enum):
 class BackendEnum(str, Enum):
     PANDAS = 'pandas'
     HXL_PROXY = 'hxl_proxy'
-    DATASTORE = 'datastore'
+    # DATASTORE = 'datastore'

@@ -51,14 +51,14 @@ async def datamart_data(
                 download_url = resource_metadata['download_url']
         if dataset_hdx_stub and resource_hdx_stub:
             dataset_resource_pagination = SearchPaginationParams(limit=5, offset=0)
-            results = await search_by_query(
+            results, _, _ = await search_by_query(
                 f'name:{dataset_hdx_stub}',
                 None,
                 search_pagination_params=dataset_resource_pagination,
             )
-            for resource_metadata in results:
-                if resource_metadata['resource_name'] == resource_hdx_stub:
-                    download_url = resource_metadata['download_url']
+            for metadata in results:
+                if metadata['resource_name'] == resource_hdx_stub:
+                    download_url = metadata['download_url']
                     break
     # This gets resource metadata for the download_url
     else:
@@ -95,8 +95,8 @@ async def datamart_data(
         results_from_backend = pandas_backend(resource_metadata, sheet_name=sheet_name)
     elif backend == BackendEnum.HXL_PROXY:
         results_from_backend = hxl_proxy_backend(resource_metadata, sheet_name=sheet_name)
-    elif backend == BackendEnum.DATASTORE:
-        raise NotImplementedError
+    # elif backend == BackendEnum.DATASTORE:
+    #     raise NotImplementedError
 
     assert results_from_backend is not None
     # Pop hxl row, if required
