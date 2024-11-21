@@ -25,7 +25,11 @@ async def test_get_with_query_params(event_loop, endpoint):
     expected_fields = endpoint_data['expected_fields']
     for param_name, param_value in query_parameters.items():
         log.info(f'Testing with parameter: {param_name}={param_value}')
-        async with AsyncClient(app=app, base_url='http://test', params={param_name: param_value}) as ac:
+        if endpoint == '/api/v1/datamart/search':
+            params = {param_name: param_value, 'limit': 5}
+        else:
+            params = {param_name: param_value}
+        async with AsyncClient(app=app, base_url='http://test', params=params) as ac:
             response = await ac.get(endpoint)
 
         assert response.status_code == 200, f'Failed for {param_name}={param_value}'
