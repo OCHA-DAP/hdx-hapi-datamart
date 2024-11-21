@@ -48,7 +48,10 @@ async def search_common_endpoint_parameters(
 
 
 def calculate_paging_metadata(pagination_parameters, decorated_results, total_rows):
-    returned_rows = len(decorated_results)
+    if isinstance(decorated_results, list):
+        returned_rows = len(decorated_results)
+    else:
+        returned_rows = decorated_results
 
     if returned_rows < pagination_parameters.limit:
         next_offset = None

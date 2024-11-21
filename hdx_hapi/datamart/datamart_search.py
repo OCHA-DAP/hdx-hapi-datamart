@@ -11,7 +11,7 @@ from fastapi import HTTPException
 from random import randrange
 from typing import Optional
 from httpx import AsyncClient
-from hdx_hapi.datamart.datamart_util import SearchPaginationParams
+from hdx_hapi.datamart.datamart_util import SearchPaginationParams, calculate_paging_metadata
 
 from hdx_hapi.config.config import get_config
 
@@ -34,25 +34,52 @@ async def datamart_search(
 ):
     results = []
     log.info(f'Query parameters: {locals()}')
+    total_rows = None
+    search_type = None
     if resource_id is not None:
         resource = await search_by_resource_id(resource_id)
         results.append(resource)
+        total_rows = 1
+        search_type = 'resource_id'
     elif filter_query is not None or main_query is not None:
-        results = await search_by_query(
+        results, total_rows, n_rows_returned = await search_by_query(
             filter_query=filter_query, main_query=main_query, search_pagination_params=search_pagination_params
         )
+        search_type = 'filter or main query'
     elif lucky_dip:
         resource = await search_by_lucky_dip()
         results.append(resource)
+        total_rows = 1
+        search_type = 'lucky dip'
     else:
         log.info('No valid query parameters provided')
+        search_type = 'No valid query parameters provided'
 
-    return results
+    resource_metadata = {
+        'search_type': search_type,
+        'total_datasets': total_rows,
+        'n_resources': len(results),
+        'help': 'https://docs.google.com/document/d/10Rkr0VxrGu2XuPjwtGhxTrDorGfXb6c8LqEWqlohtTo/edit?usp=sharing',
+    }
+    # Make paging_metadata
+    if search_type == 'filter or main query':
+        paging_metadata = calculate_paging_metadata(search_pagination_params, n_rows_returned, total_rows)
+    else:
+        paging_metadata = calculate_paging_metadata(search_pagination_params, results, total_rows)
+
+    # Attach the resource_metadata to the results here
+    results_dictionary = {
+        'resource_metadata': resource_metadata,
+        'paging_metadata': paging_metadata,
+        'data': results,
+    }
+
+    return results_dictionary
 
 
 async def search_by_query(
     filter_query: Optional[str], main_query: Optional[str], search_pagination_params: SearchPaginationParams
-) -> list[dict]:
+) -> tuple[list[dict], Optional[int], Optional[int]]:
     log.info(f'query with filter_query={filter_query}, main_query={main_query}')
     results = []
     params = {}
@@ -67,7 +94,10 @@ async def search_by_query(
     url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
     response_items = await call_ckan_api(params, url)
     # Extract resources from response:
+    total_rows = None
+    n_results_returned = None
     if 'result' in response_items:
+        n_results_returned = len(response_items['result']['results'])
         for dataset in response_items['result']['results']:
             for original_resource in dataset['resources']:
                 resource = select_resource_fields(original_resource)
@@ -75,7 +105,8 @@ async def search_by_query(
                 resource = decorate_with_fs_check_info(original_resource, resource)
 
                 results.append(resource)
-    return results
+        total_rows = response_items['result']['count']
+    return results, total_rows, n_results_returned
 
 
 async def call_ckan_api(params: dict, url: str) -> dict:

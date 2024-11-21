@@ -35,13 +35,21 @@ router = APIRouter(
 @router.get(
     '/api/datamart/list',
     response_model=DatamartGenericResponse[DatamartListResponse],
-    summary='Get lists of entities available to query the HAPI datamart i.e. tags, country codes, dataseries names',
+    summary=(
+        'Get lists of entities available to use in the HAPI Datamart search endpoint. '
+        'They include approved tags, country codes, dataseries names, HAPI resources, '
+        'Solr query fields and organizations'
+    ),
     include_in_schema=False,
 )
 @router.get(
     '/api/v1/datamart/list',
     response_model=DatamartGenericResponse[DatamartListResponse],
-    summary='Get lists of entities available to query the HAPI datamart i.e. tags, country codes, dataseries names',
+    summary=(
+        'Get lists of entities available to use in the HAPI Datamart search endpoint. '
+        'They include approved tags, country codes, dataseries names, HAPI resources, '
+        'Solr query fields and organizations'
+    ),
 )
 async def get_datamart_list(
     common_parameters: Annotated[CommonEndpointParams, Depends(common_endpoint_parameters)],
@@ -72,13 +80,13 @@ async def get_datamart_list(
 
 @router.get(
     '/api/datamart/search',
-    response_model=HapiGenericResponse[DatamartSearchResponse],
+    response_model=DatamartGenericResponse[DatamartSearchResponse],
     summary='Get information about resources in the HAPI datamart which come from HDX',
     include_in_schema=False,
 )
 @router.get(
     '/api/v1/datamart/search',
-    response_model=HapiGenericResponse[DatamartSearchResponse],
+    response_model=DatamartGenericResponse[DatamartSearchResponse],
     summary='Get information about resources in the HAPI datamart which come from HDX',
 )
 async def get_datamart_search(
@@ -104,7 +112,18 @@ async def get_datamart_search(
         lucky_dip=lucky_dip,
     )
 
-    return transform_result_to_csv_stream_if_requested(result, output_format, DatamartSearchResponse)
+    formatted_data = transform_result_to_csv_stream_if_requested(result['data'], output_format, DatamartDataResponse)
+
+    response = None
+    if isinstance(formatted_data, dict):
+        response = {}
+        response['data'] = formatted_data['data']
+        response['resource_metadata'] = result['resource_metadata']
+        response['paging_metadata'] = result['paging_metadata']
+    else:
+        response = formatted_data
+
+    return response
 
 
 @router.get(
