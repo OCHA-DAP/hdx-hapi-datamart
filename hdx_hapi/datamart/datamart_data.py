@@ -59,6 +59,7 @@ async def datamart_data(
             for metadata in results:
                 if metadata['resource_name'] == resource_hdx_stub:
                     download_url = metadata['download_url']
+                    resource_metadata = metadata
                     break
     # This gets resource metadata for the download_url
     else:

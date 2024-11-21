@@ -77,3 +77,13 @@ async def test_get_data_file_not_found(event_loop):
         response = await ac.get('/api/v1/datamart/data')
 
     assert response.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_get_data_by_resource_and_dataset_name(event_loop):
+    log.info('Started datamart data by resource and dataset name ')
+    params = {'dataset_hdx_stub': 'climada-litpop-dataset', 'resource_hdx_stub': 'admin1-summaries-litpop.csv'}
+    async with AsyncClient(app=app, base_url='http://test', params=params) as ac:
+        response = await ac.get('/api/v1/datamart/data')
+
+    assert response.status_code == 200
