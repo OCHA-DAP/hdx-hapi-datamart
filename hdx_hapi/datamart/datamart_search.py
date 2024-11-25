@@ -232,15 +232,15 @@ async def search_by_resource_id(resource_id: str) -> dict:
     log.info('Resource_id query')
     params = {'id': resource_id}
     url = f'{CONFIG.HDX_DOMAIN}{RESOURCE_SHOW_ENDPOINT}'
-    response_items = await call_ckan_api(params, url)
+    resource_response_items = await call_ckan_api(params, url)
     resource = {}
-    if 'result' in response_items:
-        resource = select_resource_fields(response_items['result'])
+    if 'result' in resource_response_items:
+        resource = select_resource_fields(resource_response_items['result'])
         params = {'fq': f'id:{resource["dataset_hdx_id"]}'}
         url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
         response_items = await call_ckan_api(params, url)
         resource = decorate_with_dataset_metadata(response_items['result']['results'][0], resource)
-        resource = decorate_with_fs_check_info(response_items['result'], resource)
+        resource = decorate_with_fs_check_info(resource_response_items['result'], resource)
 
     return resource
 
@@ -268,4 +268,5 @@ async def search_by_lucky_dip() -> dict:
         resource = decorate_with_dataset_metadata(dataset, resource)
         resource = decorate_with_fs_check_info(selected_resource, resource)
 
+    log.info(json.dumps(resource))
     return resource
