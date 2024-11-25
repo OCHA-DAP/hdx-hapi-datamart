@@ -45,8 +45,9 @@ class DatamartSearchResponse(HapiBaseModel):
     resource_hdx_id: str = Field(max_length=36, description=truncate_query_description(DOC_HDX_RESOURCE_ID))
     format: str = Field(max_length=32, description=truncate_query_description(DOC_HDX_RESOURCE_FORMAT))
     download_url: HttpUrl = Field(
+        max_length=4096,
         description='A URL to directly download the resource file from HDX, in the format '
-        'specified in the `format` field.'
+        'specified in the `format` field.',
     )
     created: datetime.datetime = Field(description='Datetime that the resource was created')
     last_modified: datetime.datetime = Field(description='Datetime that the resource was last modified')
