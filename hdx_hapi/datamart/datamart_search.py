@@ -249,7 +249,7 @@ async def search_by_lucky_dip() -> dict:
     log.info('Lucky dip query')
     # Call package search to get a number of datasets (we could hard code this) - filter to
     url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
-    count_params = {'fq': 'res_format:(CSV and XLS)'}
+    count_params = {'fq': 'res_format:(CSV and XLS and XLSX)'}
     response_items = await call_ckan_api(count_params, url)
     n_datasets = response_items['result']['count']
 
@@ -257,7 +257,7 @@ async def search_by_lucky_dip() -> dict:
     # Make a random offset in the range 0, n datasets
     random_start = randrange(0, n_datasets)
     # query with offset (start) = random, limit (rows) = 1
-    random_offset_params = {'fq': 'res_format:(CSV and XLS)', 'start': random_start, 'rows': 1}
+    random_offset_params = {'fq': 'res_format:(CSV and XLS and XLSX)', 'start': random_start, 'rows': 1}
     random_item = await call_ckan_api(random_offset_params, url)
     # Pick first resource?
     resource = {}

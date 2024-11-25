@@ -34,7 +34,7 @@ class SearchCommonEndpointParams(SearchPaginationParams):
 
 
 async def search_pagination_parameters(
-    limit: Annotated[int, search_pagination_limit_query] = 10000,
+    limit: Annotated[int, search_pagination_limit_query] = 100,
     offset: Annotated[int, pagination_offset_query] = 0,
 ) -> SearchPaginationParams:
     return SearchPaginationParams(offset=offset, limit=limit)

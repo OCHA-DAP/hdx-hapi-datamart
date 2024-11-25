@@ -20,3 +20,5 @@ coverage.xml
 
 src/
 
+
+tools/benchmark-results/

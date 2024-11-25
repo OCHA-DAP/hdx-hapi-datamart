@@ -34,21 +34,13 @@ router = APIRouter(
 @router.get(
     '/api/datamart/list',
     response_model=DatamartGenericResponse[DatamartListResponse],
-    summary=(
-        'Get lists of entities available to use in the HAPI Datamart search endpoint. '
-        'They include approved tags, country codes, dataseries names, HAPI resources, '
-        'Solr query fields and organizations'
-    ),
+    summary=('Get lists of entities available to use in the HAPI Datamart search endpoint.'),
     include_in_schema=False,
 )
 @router.get(
     '/api/v1/datamart/list',
     response_model=DatamartGenericResponse[DatamartListResponse],
-    summary=(
-        'Get lists of entities available to use in the HAPI Datamart search endpoint. '
-        'They include approved tags, country codes, dataseries names, HAPI resources, '
-        'Solr query fields and organizations'
-    ),
+    summary=('Get lists of entities available to use in the HAPI Datamart search endpoint.'),
 )
 async def get_datamart_list(
     common_parameters: Annotated[CommonEndpointParams, Depends(common_endpoint_parameters)],
