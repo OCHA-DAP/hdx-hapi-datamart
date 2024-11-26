@@ -80,7 +80,7 @@ class ListTypeEnum(str, Enum):
     TAGS = 'tags'
     ISO3_COUNTRY_CODES = 'country_codes'
     DATASERIES = 'dataseries'
-    HAPI_RESOURCES = 'hapi_resources'
+    # HAPI_RESOURCES = 'hapi_resources'
     SOLR_QUERY_FIELDS = 'solr_query_fields'
     ORGANIZATIONS = 'organizations'
 
