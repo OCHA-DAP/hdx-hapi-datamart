@@ -1,5 +1,4 @@
 import csv
-import json
 import datetime
 import logging
 import logging.config
@@ -27,8 +26,11 @@ RESULT_TEMPLATE = {
     'status_code': None,
     'file_format': None,
     'has_fs_check_info': None,
+    'n_sheets': None,
+    'n_unnamed_columns': None,
     'size': None,
     'returned_row_count': None,
+    'returned_col_count': None,
     'query_time': None,
     'success': None,
 }
@@ -92,7 +94,7 @@ def benchmark(filename, query, server):
         response.raise_for_status()
     except Exception as exc:
         log.info(f'Failed on search with query params {params}, error {str(exc)}')
-        raise
+        return
 
     # Generate results for each result
     results = []
@@ -127,20 +129,31 @@ def benchmark(filename, query, server):
             query_time = f'{time.time() - t0:0.2f}'
             print(f'{query_time}, {len(response.json()['data'])}', flush=True)
             result_row['returned_row_count'] = len(response.json()['data'])
+            result_row['returned_col_count'] = len(response.json()['data'][0].keys())
+            result_row['n_unnamed_columns'] = sum(
+                [1 for x in response.json()['data'][0].keys() if 'unnamed' in x.lower()]
+            )
+
             result_row['query_time'] = query_time
             result_row['success'] = True
             result_row['file_format'] = response.json()['resource_metadata']['format']
             # print(json.dumps(response.json()['resource_metadata'], indent=4), flush=True)
-            has_fs_check_info = 'True'
             if response.json()['resource_metadata']['sheets'][0]['sheet_name'] is None:
                 #    print('Found fs_check_info', flush=True)
-                has_fs_check_info = 'False'
-            result_row['has_fs_check_info'] = has_fs_check_info
+                result_row['has_fs_check_info'] = 'False'
+                result_row['n_sheets'] = None
+            else:
+                result_row['has_fs_check_info'] = 'True'
+                result_row['n_sheets'] = len(response.json()['resource_metadata']['sheets'])
+
         except Exception as exc:
             result_row['status_code'] = response.status_code
             query_time = f'{time.time() - t0:0.2f}'
             print(f'{query_time}, failed with {exc}', flush=True)
             result_row['returned_row_count'] = None
+            result_row['returned_col_count'] = None
+            result_row['n_sheets'] = None
+            result_row['n_unnamed_columns'] = None
             result_row['query_time'] = query_time
             result_row['success'] = False
 
