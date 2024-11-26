@@ -2,7 +2,6 @@ import pytest
 import logging
 
 from httpx import AsyncClient
-from sqlalchemy import True_
 from hdx_hapi.datamart.datamart_responses import ListTypeEnum
 from main import app
 from tests.test_endpoints.datamart_endpoint_data import datamart_endpoint_data
