@@ -54,7 +54,7 @@ class DatamartSearchResponse(HapiBaseModel):
     metadata_modified: datetime.datetime = Field(description='Datetime that the resource metadata was last modified')
     position: int = Field(description='The position in the dataset of the resource')
     size: Optional[int] = Field(description='The size of the resource in bytes')
-    dataset_notes: str = Field(max_length=2048, description='Notes on the host dataset for the resource')
+    dataset_notes: str = Field(max_length=8192, description='Notes on the host dataset for the resource')
     dataset_title: str = Field(max_length=512, description='Title on the host dataset for the resource')
     dataset_name: str = Field(max_length=512, description='Name on the host dataset for the resource')
     dataset_subnational: str = Field(max_length=32, description='Subnational flag from host dataset')

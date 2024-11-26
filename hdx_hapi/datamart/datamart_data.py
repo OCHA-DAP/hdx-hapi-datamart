@@ -53,7 +53,6 @@ async def datamart_data(
             dataset_resource_pagination = SearchPaginationParams(limit=5, offset=0)
             results, _, _ = await search_by_query(
                 f'name:{dataset_hdx_stub}',
-                None,
                 search_pagination_params=dataset_resource_pagination,
             )
             for metadata in results:

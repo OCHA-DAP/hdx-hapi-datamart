@@ -27,8 +27,7 @@ RESOURCE_SHOW_ENDPOINT = '/api/action/resource_show'
 
 async def datamart_search(
     search_pagination_params: SearchPaginationParams,
-    filter_query: Optional[str] = None,
-    main_query: Optional[str] = None,
+    query: Optional[str] = None,
     resource_id: Optional[str] = None,
     lucky_dip: Optional[bool] = None,
 ):
@@ -42,11 +41,11 @@ async def datamart_search(
         results.append(resource)
         total_rows = 1
         search_type = 'resource_id'
-    elif filter_query is not None or main_query is not None:
+    elif query is not None:
         results, total_rows, n_rows_returned = await search_by_query(
-            filter_query=filter_query, main_query=main_query, search_pagination_params=search_pagination_params
+            query=query, search_pagination_params=search_pagination_params
         )
-        search_type = 'filter or main query'
+        search_type = 'filter query'
     elif lucky_dip:
         resource = await search_by_lucky_dip()
         results.append(resource)
@@ -63,7 +62,7 @@ async def datamart_search(
         'help': 'https://docs.google.com/document/d/10Rkr0VxrGu2XuPjwtGhxTrDorGfXb6c8LqEWqlohtTo/edit?usp=sharing',
     }
     # Make paging_metadata
-    if search_type == 'filter or main query':
+    if search_type == 'filter query':
         paging_metadata = calculate_paging_metadata(search_pagination_params, n_rows_returned, total_rows)
     else:
         paging_metadata = calculate_paging_metadata(search_pagination_params, results, total_rows)
@@ -79,15 +78,13 @@ async def datamart_search(
 
 
 async def search_by_query(
-    filter_query: Optional[str], main_query: Optional[str], search_pagination_params: SearchPaginationParams
+    query: Optional[str], search_pagination_params: SearchPaginationParams
 ) -> tuple[list[dict], Optional[int], Optional[int]]:
-    log.info(f'query with filter_query={filter_query}, main_query={main_query}')
+    log.info(f'query with query={query} - going to fq parameter in CKAN')
     results = []
     params = {}
-    if filter_query is not None:
-        params['fq'] = filter_query
-    if main_query is not None:
-        params['q'] = main_query
+    if query is not None:
+        params['fq'] = query
 
     params['start'] = search_pagination_params.offset
     params['rows'] = search_pagination_params.limit
