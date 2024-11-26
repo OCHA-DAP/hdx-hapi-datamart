@@ -80,10 +80,12 @@ async def datamart_search(
 async def search_by_query(
     query: Optional[str], search_pagination_params: SearchPaginationParams
 ) -> tuple[list[dict], Optional[int], Optional[int]]:
-    log.info(f'query with query={query} - going to fq parameter in CKAN')
     results = []
     params = {}
     if query is not None:
+        query = query.replace('tags:', 'vocab_Topics:')
+        query = query.replace('countries:', 'groups:')
+        log.info(f'query with query={query} - going to fq parameter in CKAN')
         params['fq'] = query
 
     params['start'] = search_pagination_params.offset
