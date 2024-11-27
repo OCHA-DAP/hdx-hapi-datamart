@@ -215,7 +215,7 @@ def remove_hxl_row(
     if is_hxlated is None:
         n_hashes = 0
         for k, v in decorated_results[0].items():
-            if '#' in v:
+            if '#' in str(v):
                 n_hashes += 1
         if n_hashes > 3:
             is_hxlated = True
