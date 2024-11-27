@@ -119,6 +119,10 @@ async def call_ckan_api(params: dict, url: str) -> dict:
     except httpx.ConnectTimeout:
         log.info(f'**Timeout in {time.time() - t0:0.2f} seconds')
         response = None
+        raise HTTPException(
+            status_code=504,
+            detail=f'Request to {url} timed out after {time.time() - t0:0.2f} seconds',
+        )
     except Exception as exc:
         log.info(f'{exc}')
         raise exc

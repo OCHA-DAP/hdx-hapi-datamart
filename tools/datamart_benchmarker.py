@@ -15,8 +15,6 @@ log = logging.getLogger(__name__)
 LOCAL_DATAMART_ROOT_URL = 'http://localhost:8844'
 DEV_DATAMART_ROOT_URL = 'https://dev.hapi-humdata-org.ahconu.org'
 
-APP_IDENTIFIER = 'SERYSU5URVJOQUxfZG9jc191aV9paDppYW4uaG9wa2luc29uQGh1bWRhdGEub3Jn'
-
 RESULT_TEMPLATE = {
     'datetime': None,
     'server': None,
@@ -37,7 +35,7 @@ RESULT_TEMPLATE = {
 
 
 def get_app_identifier(
-    email_address: str = 'ian.hopkinson%40humdata.org',
+    email_address: str = 'datamart%40humdata.org',
     app_name: str = 'HDXINTERNAL_datamart_benchmarker',
     root_url: str = LOCAL_DATAMART_ROOT_URL,
 ) -> str:
@@ -50,7 +48,7 @@ def get_app_identifier(
     return app_identifier
 
 
-def benchmark(filename, query, server):
+def benchmark(filename, query, server, backend):
     log.info(f'Started datamart benchmarking: {filename}')
     root_url = None
     run_start_time = time.time()
@@ -85,6 +83,7 @@ def benchmark(filename, query, server):
     params = query
     params['app_identifier'] = app_identifier
     params['limit'] = 20
+    params['backend'] = backend
 
     # Do the search
     try:
@@ -109,10 +108,7 @@ def benchmark(filename, query, server):
 
         t0 = time.time()
         print(i, record['resource_name'], record['size'], flush=True)
-        params = {
-            'download_url': record['download_url'],
-            'app_identifier': app_identifier,
-        }
+        params = {'download_url': record['download_url'], 'app_identifier': app_identifier, 'backend': backend}
         result_row = RESULT_TEMPLATE.copy()
         result_row['datetime'] = datetime.datetime.now().isoformat()
         result_row['server'] = server
@@ -169,25 +165,39 @@ def benchmark(filename, query, server):
 
 if __name__ == '__main__':
     target = None
-    server = 'local'
+    server = 'local'  # alternative is dev
+    backend = 'pandas'  # alternative is hxl_proxy
     date_ = datetime.datetime.now().isoformat()[0:10]
     if len(sys.argv) > 1:
         target = sys.argv[1]
     if len(sys.argv) > 2:
         server = sys.argv[2]
+    if len(sys.argv) > 3:
+        backend = sys.argv[3]
 
     if target is None:
-        print('Target must be specified on commandline, one of climada|insecurity-insight|lucky_dip', flush=True)
+        print(
+            f'Target must be specified on commandline, one of climada|insecurity-insight|lucky_dip, received {target}',
+            flush=True,
+        )
+        sys.exit()
+    if server not in ['local', 'dev']:
+        print(f'Server must be one of local|dev, received {server}', flush=True)
+        sys.exit()
+    if backend not in ['pandas', 'hxl_proxy']:
+        print(f'backend must be one of pandas|local_proxy, received {backend}', flush=True)
+        sys.exit()
+
     if target == 'climada':
-        filename = f'{date_}-climada-benchmark-{server}.csv'
+        filename = f'{date_}-climada-benchmark-{server}-{backend}.csv'
         query = {'filter_query': r'dataset_source:ETH\ Zurich\ Climada'}
-        benchmark(filename, query, server)
+        benchmark(filename, query, server, backend)
     elif target == 'insecurity-insight':
-        filename = f'{date_}-insecurity-insight-benchmark-{server}.csv'
+        filename = f'{date_}-insecurity-insight-benchmark-{server}-{backend}.csv'
         query = {'filter_query': r'dataset_source:Insecurity\ Insight'}
-        benchmark(filename, query, server)
+        benchmark(filename, query, server, backend)
     elif target == 'lucky_dip':
-        filename = f'{date_}-lucky-dip-csv-xls-{server}.csv'
+        filename = f'{date_}-lucky-dip-csv-xls-{server}-{backend}.csv'
         while True:
             query = {'lucky_dip': True}
-            benchmark(filename, query, server)
+            benchmark(filename, query, server, backend)
