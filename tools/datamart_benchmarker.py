@@ -107,8 +107,9 @@ def benchmark(filename, query, server, backend):
         #     break
 
         t0 = time.time()
-        print(i, record['resource_name'], record['size'], flush=True)
-        params = {'download_url': record['download_url'], 'app_identifier': app_identifier, 'backend': backend}
+        print(i, record['resource_name'], record['download_url'], record['size'], flush=True)
+        # params = {'download_url': record['download_url'], 'app_identifier': app_identifier, 'backend': backend}
+        params = {'resource_hdx_id': record['resource_hdx_id'], 'app_identifier': app_identifier, 'backend': backend}
         result_row = RESULT_TEMPLATE.copy()
         result_row['datetime'] = datetime.datetime.now().isoformat()
         result_row['server'] = server

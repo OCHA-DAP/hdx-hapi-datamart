@@ -147,6 +147,8 @@ def pandas_backend(resource_metadata: dict, sheet_name: Optional[str]) -> list[d
         raise HTTPException(status_code=204, detail=f'Resource not found for URL {download_url}')
     except pandas.errors.ParserError:
         raise HTTPException(status_code=422, detail=f'Resource could not be parsed for URL {download_url}')
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=422, detail=f'Unicode error for URL {download_url}')
 
     return results
 
