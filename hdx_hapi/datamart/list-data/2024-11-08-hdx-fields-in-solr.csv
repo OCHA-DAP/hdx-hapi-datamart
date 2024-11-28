@@ -20,11 +20,6 @@ depends_on,,Dataset,text,,,schema.xml
 derives_from,,Dataset,text,,,schema.xml
 due_date,No,Dataset,date,"due_date:""2024-05-08T17:22:36Z""","We need the ""Z"" at the end of the date!",gibraltar test fixture
 entity_type,,Dataset,text,,,schema.xml
-extras_archived,Yes,Dataset,text,extras_archived:true,,Alex
-extras_data_update_frequency,Yes,Dataset,text,extras_data_update_frequency:7,,Alex
-extras_dataset_source,,Dataset,text,"extras_dataset_source: ""OpenStreetMap contributors""",,Alex
-extras_is_requestdata_type,Yes,Dataset,text,extras_is_requestdata_type:true,,Alex
-extras_subnational,Yes,Dataset,text,extras_subnational:1,,Alex
 groups,No,Dataset,text,,groups is searchable but not specifically,gibraltar test fixture
 has_derivation,,Dataset,text,,,schema.xml
 has_geodata,Yes,Dataset,boolean,has_geodata:true,,Alex

@@ -58,23 +58,6 @@ async def datamart_list(pagination_parameters: PaginationParams, list_type: Opti
             '2PACX-1vQD3ba751XbWS5GVwdJmzOF9mc7dnm56hE2U8di12JnpYkdseILmjfGSn1W7UVQzmHKSd6p8FWaXdFL'
             '/pub?gid=1768359211&single=true&output=csv'
         )
-    elif list_type == ListTypeEnum.HAPI_RESOURCES:
-        openapi_url = 'https://hapi.humdata.org/openapi.json'
-        with Client() as ac:
-            response = ac.get(openapi_url)
-
-        response.raise_for_status()
-
-        results = []
-        records = response.json()['paths']
-        for path_ in records.keys():
-            try:
-                description = records[path_]['get']['description']
-            except KeyError:
-                description = ''
-            row = {'value': path_, 'description': description}
-            results.append(row)
-        resource_metadata['list_source'] = 'https://hapi.humdata.org/openapi.json'
     elif list_type == ListTypeEnum.ORGANIZATIONS:
         organisation_list_url = 'https://data.humdata.org/api/action/organization_list?all_fields=True'
         with Client() as ac:

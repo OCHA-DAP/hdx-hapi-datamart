@@ -27,8 +27,7 @@ RESOURCE_SHOW_ENDPOINT = '/api/action/resource_show'
 
 async def datamart_search(
     search_pagination_params: SearchPaginationParams,
-    filter_query: Optional[str] = None,
-    main_query: Optional[str] = None,
+    query: Optional[str] = None,
     resource_id: Optional[str] = None,
     lucky_dip: Optional[bool] = None,
 ):
@@ -42,11 +41,11 @@ async def datamart_search(
         results.append(resource)
         total_rows = 1
         search_type = 'resource_id'
-    elif filter_query is not None or main_query is not None:
+    elif query is not None:
         results, total_rows, n_rows_returned = await search_by_query(
-            filter_query=filter_query, main_query=main_query, search_pagination_params=search_pagination_params
+            query=query, search_pagination_params=search_pagination_params
         )
-        search_type = 'filter or main query'
+        search_type = 'filter query'
     elif lucky_dip:
         resource = await search_by_lucky_dip()
         results.append(resource)
@@ -63,7 +62,7 @@ async def datamart_search(
         'help': 'https://docs.google.com/document/d/10Rkr0VxrGu2XuPjwtGhxTrDorGfXb6c8LqEWqlohtTo/edit?usp=sharing',
     }
     # Make paging_metadata
-    if search_type == 'filter or main query':
+    if search_type == 'filter query':
         paging_metadata = calculate_paging_metadata(search_pagination_params, n_rows_returned, total_rows)
     else:
         paging_metadata = calculate_paging_metadata(search_pagination_params, results, total_rows)
@@ -79,15 +78,15 @@ async def datamart_search(
 
 
 async def search_by_query(
-    filter_query: Optional[str], main_query: Optional[str], search_pagination_params: SearchPaginationParams
+    query: Optional[str], search_pagination_params: SearchPaginationParams
 ) -> tuple[list[dict], Optional[int], Optional[int]]:
-    log.info(f'query with filter_query={filter_query}, main_query={main_query}')
     results = []
     params = {}
-    if filter_query is not None:
-        params['fq'] = filter_query
-    if main_query is not None:
-        params['q'] = main_query
+    if query is not None:
+        query = query.replace('tags:', 'vocab_Topics:')
+        query = query.replace('countries:', 'groups:')
+        log.info(f'query with query={query} - going to fq parameter in CKAN')
+        params['fq'] = query
 
     params['start'] = search_pagination_params.offset
     params['rows'] = search_pagination_params.limit
@@ -120,6 +119,10 @@ async def call_ckan_api(params: dict, url: str) -> dict:
     except httpx.ConnectTimeout:
         log.info(f'**Timeout in {time.time() - t0:0.2f} seconds')
         response = None
+        raise HTTPException(
+            status_code=504,
+            detail=f'Request to {url} timed out after {time.time() - t0:0.2f} seconds',
+        )
     except Exception as exc:
         log.info(f'{exc}')
         raise exc
@@ -232,15 +235,15 @@ async def search_by_resource_id(resource_id: str) -> dict:
     log.info('Resource_id query')
     params = {'id': resource_id}
     url = f'{CONFIG.HDX_DOMAIN}{RESOURCE_SHOW_ENDPOINT}'
-    response_items = await call_ckan_api(params, url)
+    resource_response_items = await call_ckan_api(params, url)
     resource = {}
-    if 'result' in response_items:
-        resource = select_resource_fields(response_items['result'])
+    if 'result' in resource_response_items:
+        resource = select_resource_fields(resource_response_items['result'])
         params = {'fq': f'id:{resource["dataset_hdx_id"]}'}
         url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
         response_items = await call_ckan_api(params, url)
         resource = decorate_with_dataset_metadata(response_items['result']['results'][0], resource)
-        resource = decorate_with_fs_check_info(response_items['result'], resource)
+        resource = decorate_with_fs_check_info(resource_response_items['result'], resource)
 
     return resource
 
@@ -249,7 +252,7 @@ async def search_by_lucky_dip() -> dict:
     log.info('Lucky dip query')
     # Call package search to get a number of datasets (we could hard code this) - filter to
     url = f'{CONFIG.HDX_DOMAIN}{PACKAGE_SEARCH_ENDPOINT}'
-    count_params = {'fq': 'res_format:(CSV and XLS)'}
+    count_params = {'fq': 'res_format:(CSV and XLS and XLSX)'}
     response_items = await call_ckan_api(count_params, url)
     n_datasets = response_items['result']['count']
 
@@ -257,7 +260,7 @@ async def search_by_lucky_dip() -> dict:
     # Make a random offset in the range 0, n datasets
     random_start = randrange(0, n_datasets)
     # query with offset (start) = random, limit (rows) = 1
-    random_offset_params = {'fq': 'res_format:(CSV and XLS)', 'start': random_start, 'rows': 1}
+    random_offset_params = {'fq': 'res_format:(CSV and XLS and XLSX)', 'start': random_start, 'rows': 1}
     random_item = await call_ckan_api(random_offset_params, url)
     # Pick first resource?
     resource = {}
@@ -268,4 +271,5 @@ async def search_by_lucky_dip() -> dict:
         resource = decorate_with_dataset_metadata(dataset, resource)
         resource = decorate_with_fs_check_info(selected_resource, resource)
 
+    log.info(json.dumps(resource))
     return resource

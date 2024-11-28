@@ -34,21 +34,13 @@ router = APIRouter(
 @router.get(
     '/api/datamart/list',
     response_model=DatamartGenericResponse[DatamartListResponse],
-    summary=(
-        'Get lists of entities available to use in the HAPI Datamart search endpoint. '
-        'They include approved tags, country codes, dataseries names, HAPI resources, '
-        'Solr query fields and organizations'
-    ),
+    summary=('Get lists of entities available to use in the HAPI Datamart search endpoint.'),
     include_in_schema=False,
 )
 @router.get(
     '/api/v1/datamart/list',
     response_model=DatamartGenericResponse[DatamartListResponse],
-    summary=(
-        'Get lists of entities available to use in the HAPI Datamart search endpoint. '
-        'They include approved tags, country codes, dataseries names, HAPI resources, '
-        'Solr query fields and organizations'
-    ),
+    summary=('Get lists of entities available to use in the HAPI Datamart search endpoint.'),
 )
 async def get_datamart_list(
     common_parameters: Annotated[CommonEndpointParams, Depends(common_endpoint_parameters)],
@@ -58,7 +50,7 @@ async def get_datamart_list(
     output_format: OutputFormat = OutputFormat.JSON,
 ):
     """
-    Provide a facility to retreive lists of entities such as tags, country codes, HAPI resources and dataseries names
+    Provide a facility to retreive lists of entities such as approved tags, country codes, and dataseries names
     for use with the search and data endpoints
     """
     result = await get_datamart_list_srv(pagination_parameters=common_parameters, list_type=list_type)
@@ -91,10 +83,7 @@ async def get_datamart_list(
 async def get_datamart_search(
     search_common_parameters: Annotated[SearchCommonEndpointParams, Depends(search_common_endpoint_parameters)],
     resource_hdx_id: Annotated[Optional[str], Query(max_length=36, description=f'{DOC_HDX_RESOURCE_ID}')] = None,
-    main_query: Annotated[
-        Optional[str], Query(max_length=1024, description='Search HDX using a Solr main query expression')
-    ] = None,
-    filter_query: Annotated[
+    query: Annotated[
         Optional[str], Query(max_length=1024, description='Search HDX using a Solr filter query expression')
     ] = None,
     lucky_dip: Annotated[Optional[bool], Query(description='Return a random resource record from HDX')] = None,
@@ -106,8 +95,7 @@ async def get_datamart_search(
     result = await get_datamart_search_srv(
         search_pagination_parameters=search_common_parameters,
         resource_hdx_id=resource_hdx_id,
-        main_query=main_query,
-        filter_query=filter_query,
+        query=query,
         lucky_dip=lucky_dip,
     )
 

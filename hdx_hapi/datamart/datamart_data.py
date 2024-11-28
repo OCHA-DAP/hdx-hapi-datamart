@@ -53,7 +53,6 @@ async def datamart_data(
             dataset_resource_pagination = SearchPaginationParams(limit=5, offset=0)
             results, _, _ = await search_by_query(
                 f'name:{dataset_hdx_stub}',
-                None,
                 search_pagination_params=dataset_resource_pagination,
             )
             for metadata in results:
@@ -148,6 +147,8 @@ def pandas_backend(resource_metadata: dict, sheet_name: Optional[str]) -> list[d
         raise HTTPException(status_code=204, detail=f'Resource not found for URL {download_url}')
     except pandas.errors.ParserError:
         raise HTTPException(status_code=422, detail=f'Resource could not be parsed for URL {download_url}')
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=422, detail=f'Unicode error for URL {download_url}')
 
     return results
 
@@ -188,7 +189,7 @@ def hxl_proxy_backend(resource_metadata: dict, sheet_name: Optional[str]) -> lis
     headers = results[0]
     decorated_results = []
     for result in results[1:]:
-        decorated_row = zip(headers, result)
+        decorated_row = dict(zip(headers, result))
         decorated_results.append(decorated_row)
 
     return decorated_results
@@ -212,15 +213,20 @@ def remove_hxl_row(
             is_hxlated = None
 
     # is_hxlated detection would go here:
+    # try:
     if is_hxlated is None:
         n_hashes = 0
         for k, v in decorated_results[0].items():
-            if '#' in v:
+            if '#' in str(v):
                 n_hashes += 1
         if n_hashes > 3:
             is_hxlated = True
         else:
             is_hxlated = False
+    # except AttributeError:
+    #     raise HTTPException(
+    #         status_code=422, detail=f'Resource could not be parsed by HXL proxy because it is a zip file'
+    #     )
     # Pop HXL row if it exists
     if is_hxlated:
         decorated_results = decorated_results[1:]
